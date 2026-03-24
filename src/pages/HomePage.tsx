@@ -1,221 +1,181 @@
-import { useState, useEffect } from 'react';
-import {
-  Lightbulb,
-  Send,
-  Clock,
-  CheckCircle2,
-  Loader2,
-  User,
-} from 'lucide-react';
-import { fetchIdeas, submitIdea, IdeaTodo } from '../lib/supabase';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
+import { fetchActivities } from '../lib/supabase';
+import { Activity, SUGGESTED_TAGS } from '../types';
+import Header from '../components/Header';
+import ActivityCard from '../components/ActivityCard';
+import TagBadge from '../components/TagBadge';
 
 const HomePage = () => {
-  const [ideas, setIdeas] = useState<IdeaTodo[]>([]);
-  const [newIdea, setNewIdea] = useState('');
-  const [authorName, setAuthorName] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [locationFilter, setLocationFilter] = useState<string>('');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
-    loadIdeas();
+    loadActivities();
   }, []);
 
-  const loadIdeas = async () => {
+  const loadActivities = async () => {
     setIsLoading(true);
-    const data = await fetchIdeas();
-    setIdeas(data);
+    const data = await fetchActivities();
+    setActivities(data.filter((a) => !a.archived));
     setIsLoading(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newIdea.trim() || !authorName.trim() || isSubmitting) return;
-
-    setIsSubmitting(true);
-    setSubmitError(null);
-
-    const result = await submitIdea(newIdea.trim(), authorName.trim());
-
-    if (result.success) {
-      setNewIdea('');
-      setShowSuccess(true);
-      await loadIdeas();
-      setTimeout(() => setShowSuccess(false), 3000);
-    } else {
-      setSubmitError(result.error || 'Kunne ikke indsende idé');
-    }
-
-    setIsSubmitting(false);
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('da-DK', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+  const filtered = useMemo(() => {
+    return activities.filter((a) => {
+      if (search) {
+        const q = search.toLowerCase();
+        const match =
+          a.title.toLowerCase().includes(q) ||
+          a.shortDescription.toLowerCase().includes(q) ||
+          a.longDescription.toLowerCase().includes(q) ||
+          a.tags.some((t) => t.toLowerCase().includes(q)) ||
+          a.author.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+      if (selectedTags.length > 0 && !selectedTags.some((t) => a.tags.includes(t))) {
+        return false;
+      }
+      if (locationFilter && a.location !== locationFilter) return false;
+      if (difficultyFilter && a.difficulty !== difficultyFilter) return false;
+      return true;
     });
-  };
+  }, [activities, search, selectedTags, locationFilter, difficultyFilter]);
 
-  const parseAuthor = (description: string | null): string => {
-    if (!description) return 'Ukendt';
-    const match = description.match(/<strong>Fra:<\/strong>\s*([^<(]+)/);
-    return match ? match[1].trim() : 'Ukendt';
-  };
-
-  const parseIdeaText = (description: string | null, title: string): string => {
-    if (!description) return title.replace('💡 IDÉBOKS: ', '');
-    const match = description.match(/<strong>Idé:<\/strong>\s*([^<]+)/);
-    return match ? match[1].trim() : title.replace('💡 IDÉBOKS: ', '');
-  };
-
-  const pendingIdeas = ideas.filter((i) => !i.resolved);
-  const resolvedIdeas = ideas.filter((i) => i.resolved);
+  const activeFilterCount =
+    selectedTags.length + (locationFilter ? 1 : 0) + (difficultyFilter ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-battle-black">
-      {/* Header */}
-      <div className="bg-battle-dark border-b border-battle-orange/30 px-6 py-8 text-center">
-        <div className="flex items-center justify-center gap-3 mb-2">
-          <Lightbulb className="w-8 h-8 text-yellow-400" />
-          <h1 className="text-3xl font-bold text-white">Ideer & Forslag</h1>
-        </div>
-        <p className="text-gray-400 text-sm">
-          Del dine ideer til forbedringer — de bedste forslag bliver implementeret
-        </p>
-      </div>
+      <Header />
 
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
-        {/* Submit form */}
-        <form onSubmit={handleSubmit} className="bg-battle-grey rounded-2xl p-6 border border-white/10">
-          <h2 className="text-lg font-semibold text-white mb-4">Indsend en idé</h2>
-
-          <div className="space-y-3">
-            <input
-              type="text"
-              value={authorName}
-              onChange={(e) => setAuthorName(e.target.value)}
-              placeholder="Dit navn"
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
-            />
-            <textarea
-              value={newIdea}
-              onChange={(e) => setNewIdea(e.target.value)}
-              placeholder="Beskriv din idé eller forslag..."
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
-              maxLength={500}
-              rows={3}
-            />
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* Search & Filter Bar */}
+        <div className="mb-6 space-y-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Søg i aktiviteter..."
+                className="w-full bg-battle-grey border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+              />
+            </div>
             <button
-              type="submit"
-              disabled={!newIdea.trim() || !authorName.trim() || isSubmitting}
-              className="w-full px-4 py-3 bg-battle-orange hover:bg-battle-orangeLight disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors border ${
+                showFilters || activeFilterCount > 0
+                  ? 'bg-battle-orange/20 border-battle-orange/50 text-battle-orange'
+                  : 'bg-battle-grey border-white/10 text-gray-400 hover:text-white'
+              }`}
             >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
-              ) : (
-                <Send className="w-5 h-5" />
+              <SlidersHorizontal className="w-4 h-4" />
+              Filter
+              {activeFilterCount > 0 && (
+                <span className="bg-battle-orange text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {activeFilterCount}
+                </span>
               )}
-              Send idé
             </button>
           </div>
 
-          {showSuccess && (
-            <div className="mt-4 flex items-center gap-2 text-green-400 text-sm">
-              <CheckCircle2 className="w-4 h-4" />
-              <span>Din idé er sendt — tak!</span>
-            </div>
-          )}
-
-          {submitError && (
-            <div className="mt-4 text-red-400 text-sm">{submitError}</div>
-          )}
-        </form>
-
-        {/* Ideas list */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-white">
-            {isLoading
-              ? 'Henter ideer...'
-              : ideas.length > 0
-                ? `${pendingIdeas.length} aktive idé${pendingIdeas.length !== 1 ? 'er' : ''}`
-                : 'Ingen ideer endnu — vær den første!'}
-          </h2>
-
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 text-battle-orange animate-spin" />
-            </div>
-          ) : (
-            <>
-              {pendingIdeas.map((idea) => (
-                <div
-                  key={idea.id}
-                  className="bg-battle-grey rounded-xl p-5 border-l-4 border-yellow-500/50"
-                >
-                  <div className="flex items-start gap-3">
-                    <Lightbulb className="w-5 h-5 mt-0.5 flex-shrink-0 text-yellow-400" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm leading-relaxed">
-                        {parseIdeaText(idea.description, idea.title)}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 flex-wrap">
-                        <span className="flex items-center gap-1 text-gray-400">
-                          <User className="w-3 h-3" />
-                          {parseAuthor(idea.description)}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
-                          {formatDate(idea.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+          {showFilters && (
+            <div className="bg-battle-grey rounded-xl p-4 border border-white/10 space-y-4">
+              <div className="flex flex-wrap gap-3">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Lokation</label>
+                  <select
+                    value={locationFilter}
+                    onChange={(e) => setLocationFilter(e.target.value)}
+                    className="bg-battle-dark border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-battle-orange"
+                  >
+                    <option value="">Alle</option>
+                    <option value="indendørs">Indendørs</option>
+                    <option value="udendørs">Udendørs</option>
+                    <option value="begge">Begge dele</option>
+                  </select>
                 </div>
-              ))}
-
-              {resolvedIdeas.length > 0 && (
-                <>
-                  <h3 className="text-sm font-medium text-gray-500 mt-8">
-                    Behandlede ideer ({resolvedIdeas.length})
-                  </h3>
-                  {resolvedIdeas.map((idea) => (
-                    <div
-                      key={idea.id}
-                      className="bg-battle-grey rounded-xl p-5 border-l-4 border-green-500/50 opacity-60"
-                    >
-                      <div className="flex items-start gap-3">
-                        <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0 text-green-500" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white text-sm leading-relaxed">
-                            {parseIdeaText(idea.description, idea.title)}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 flex-wrap">
-                            <span className="flex items-center gap-1 text-gray-400">
-                              <User className="w-3 h-3" />
-                              {parseAuthor(idea.description)}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {formatDate(idea.created_at)}
-                            </span>
-                            <span className="flex items-center gap-1 text-green-400">
-                              <CheckCircle2 className="w-3 h-3" />
-                              Behandlet
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Sværhedsgrad</label>
+                  <select
+                    value={difficultyFilter}
+                    onChange={(e) => setDifficultyFilter(e.target.value)}
+                    className="bg-battle-dark border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-battle-orange"
+                  >
+                    <option value="">Alle</option>
+                    <option value="let">Let</option>
+                    <option value="medium">Medium</option>
+                    <option value="svær">Svær</option>
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-2">Tags</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {SUGGESTED_TAGS.map((tag) => (
+                    <TagBadge
+                      key={tag}
+                      tag={tag}
+                      active={selectedTags.includes(tag)}
+                      onClick={() => toggleTag(tag)}
+                    />
                   ))}
-                </>
+                </div>
+              </div>
+              {activeFilterCount > 0 && (
+                <button
+                  onClick={() => {
+                    setSelectedTags([]);
+                    setLocationFilter('');
+                    setDifficultyFilter('');
+                  }}
+                  className="text-xs text-gray-400 hover:text-white transition-colors"
+                >
+                  Ryd alle filtre
+                </button>
               )}
-            </>
+            </div>
           )}
         </div>
+
+        {/* Results */}
+        {isLoading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-8 h-8 text-battle-orange animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-20">
+            <p className="text-gray-500 text-lg">
+              {activities.length === 0
+                ? 'Ingen aktiviteter endnu — opret den første!'
+                : 'Ingen aktiviteter matcher dine filtre'}
+            </p>
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-gray-500 mb-4">
+              {filtered.length} aktivitet{filtered.length !== 1 ? 'er' : ''}
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filtered.map((activity) => (
+                <ActivityCard key={activity.id} activity={activity} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
