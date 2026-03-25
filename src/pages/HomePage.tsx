@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Loader2, SlidersHorizontal } from 'lucide-react';
+import { Search, Loader2, SlidersHorizontal, Clock } from 'lucide-react';
 import { fetchActivities } from '../lib/supabase';
-import { Activity, SUGGESTED_TAGS } from '../types';
+import { Activity, SUGGESTED_TAGS, DURATION_RANGES } from '../types';
 import Header from '../components/Header';
 import ActivityCard from '../components/ActivityCard';
 import TagBadge from '../components/TagBadge';
@@ -13,6 +13,7 @@ const HomePage = () => {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [locationFilter, setLocationFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('');
+  const [durationFilter, setDurationFilter] = useState<number>(0); // index into DURATION_RANGES
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
@@ -34,27 +35,56 @@ const HomePage = () => {
 
   const filtered = useMemo(() => {
     return activities.filter((a) => {
+      // Text search across all fields
       if (search) {
         const q = search.toLowerCase();
-        const match =
-          a.title.toLowerCase().includes(q) ||
-          a.shortDescription.toLowerCase().includes(q) ||
-          a.longDescription.toLowerCase().includes(q) ||
-          a.tags.some((t) => t.toLowerCase().includes(q)) ||
-          a.author.toLowerCase().includes(q);
+        const searchFields = [
+          a.title,
+          a.shortDescription,
+          a.longDescription,
+          a.author,
+          a.duration,
+          a.groupSize,
+          a.location,
+          a.difficulty,
+          ...a.tags,
+          ...a.materials.map((m) => m.name),
+          ...a.links.map((l) => l.label),
+        ];
+        const match = searchFields.some((field) =>
+          field.toLowerCase().includes(q)
+        );
         if (!match) return false;
       }
+
+      // Tag filter
       if (selectedTags.length > 0 && !selectedTags.some((t) => a.tags.includes(t))) {
         return false;
       }
+
+      // Location filter
       if (locationFilter && a.location !== locationFilter) return false;
+
+      // Difficulty filter
       if (difficultyFilter && a.difficulty !== difficultyFilter) return false;
+
+      // Duration filter
+      if (durationFilter > 0) {
+        const range = DURATION_RANGES[durationFilter];
+        if (a.durationMinutes < range.min || a.durationMinutes > range.max) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [activities, search, selectedTags, locationFilter, difficultyFilter]);
+  }, [activities, search, selectedTags, locationFilter, difficultyFilter, durationFilter]);
 
   const activeFilterCount =
-    selectedTags.length + (locationFilter ? 1 : 0) + (difficultyFilter ? 1 : 0);
+    selectedTags.length +
+    (locationFilter ? 1 : 0) +
+    (difficultyFilter ? 1 : 0) +
+    (durationFilter > 0 ? 1 : 0);
 
   return (
     <div className="min-h-screen bg-battle-black">
@@ -70,7 +100,7 @@ const HomePage = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Søg i aktiviteter..."
+                placeholder="Søg i alle felter (titel, beskrivelse, tags, materialer, forfatter...)"
                 className="w-full bg-battle-grey border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
               />
             </div>
@@ -121,6 +151,23 @@ const HomePage = () => {
                     <option value="svær">Svær</option>
                   </select>
                 </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Varighed
+                  </label>
+                  <select
+                    value={durationFilter}
+                    onChange={(e) => setDurationFilter(Number(e.target.value))}
+                    className="bg-battle-dark border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-battle-orange"
+                  >
+                    {DURATION_RANGES.map((range, i) => (
+                      <option key={i} value={i}>
+                        {range.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-2">Tags</label>
@@ -141,6 +188,7 @@ const HomePage = () => {
                     setSelectedTags([]);
                     setLocationFilter('');
                     setDifficultyFilter('');
+                    setDurationFilter(0);
                   }}
                   className="text-xs text-gray-400 hover:text-white transition-colors"
                 >
@@ -160,14 +208,14 @@ const HomePage = () => {
           <div className="text-center py-20">
             <p className="text-gray-500 text-lg">
               {activities.length === 0
-                ? 'Ingen aktiviteter endnu — opret den første!'
-                : 'Ingen aktiviteter matcher dine filtre'}
+                ? 'Ingen idéer endnu — opret den første!'
+                : 'Ingen idéer matcher dine filtre'}
             </p>
           </div>
         ) : (
           <>
             <p className="text-xs text-gray-500 mb-4">
-              {filtered.length} aktivitet{filtered.length !== 1 ? 'er' : ''}
+              {filtered.length} idé{filtered.length !== 1 ? 'er' : ''}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((activity) => (

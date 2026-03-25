@@ -1,16 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Clock, Users, MapPin, Play, Image as ImageIcon } from 'lucide-react';
+import { Clock, Users, MapPin, Play, Image as ImageIcon, FileText } from 'lucide-react';
 import { Activity, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
 import TagBadge from './TagBadge';
 
-const ActivityCard = ({
-  activity,
-  onAddToList,
-}: {
-  activity: Activity;
-  onAddToList?: () => void;
-}) => {
+const ActivityCard = ({ activity }: { activity: Activity }) => {
   const hasMedia = activity.youtubeUrl || activity.videoUrl || activity.images.length > 0;
+  const fileCount = activity.materials.filter((m) => m.url).length;
 
   return (
     <div className="bg-battle-grey rounded-xl border border-white/10 hover:border-battle-orange/30 transition-all group">
@@ -86,6 +81,12 @@ const ActivityCard = ({
               Video
             </span>
           )}
+          {fileCount > 0 && (
+            <span className="flex items-center gap-1 text-emerald-400">
+              <FileText className="w-3.5 h-3.5" />
+              {fileCount} fil{fileCount !== 1 ? 'er' : ''}
+            </span>
+          )}
         </div>
 
         {activity.tags.length > 0 && (
@@ -101,25 +102,12 @@ const ActivityCard = ({
 
         <div className="flex items-center justify-between pt-2 border-t border-white/5">
           <span className="text-xs text-gray-600">af {activity.author}</span>
-          <div className="flex gap-2">
-            {onAddToList && (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onAddToList();
-                }}
-                className="text-xs text-gray-400 hover:text-battle-orange transition-colors"
-              >
-                + Tilføj til liste
-              </button>
-            )}
-            <Link
-              to={`/activity/${activity.id}`}
-              className="text-xs text-battle-orange hover:text-battle-orangeLight transition-colors"
-            >
-              Se detaljer →
-            </Link>
-          </div>
+          <Link
+            to={`/activity/${activity.id}`}
+            className="text-xs text-battle-orange hover:text-battle-orangeLight transition-colors"
+          >
+            Se detaljer →
+          </Link>
         </div>
       </div>
     </div>

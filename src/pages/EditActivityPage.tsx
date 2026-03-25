@@ -36,7 +36,7 @@ const EditActivityPage = () => {
     return (
       <div className="min-h-screen bg-battle-black">
         <Header />
-        <div className="text-center py-20 text-gray-500">Aktivitet ikke fundet</div>
+        <div className="text-center py-20 text-gray-500">Idé ikke fundet</div>
       </div>
     );
   }
@@ -52,10 +52,10 @@ const EditActivityPage = () => {
           className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Tilbage til aktivitet
+          Tilbage til idé
         </Link>
 
-        <h2 className="text-2xl font-bold text-white mb-6">Rediger aktivitet</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Rediger idé</h2>
 
         <ActivityForm
           initial={initial}

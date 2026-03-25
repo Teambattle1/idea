@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
-import { Activity, IdeaList } from '../types';
+import { Activity, MaterialFile } from '../types';
 
 const supabaseUrl = 'https://ilbjytyukicbssqftmma.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYmp5dHl1a2ljYnNzcWZ0bW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MzA0NjEsImV4cCI6MjA3MDQwNjQ2MX0.I_PWByMPcOYhWgeq9MxXgOo-NCZYfEuzYmo35XnBFAY';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-const MARIA_EMPLOYEE_ID = 'emp_z4ftvagjq';
+const IDEA_EMPLOYEE_ID = 'emp_z4ftvagjq';
+const STORAGE_BUCKET = 'idea-materials';
 
 interface TodoRow {
   id: string;
@@ -19,7 +20,57 @@ interface TodoRow {
   category: string | null;
 }
 
+// --- File Upload ---
+
+export async function uploadFile(file: File): Promise<MaterialFile | null> {
+  try {
+    const timestamp = Date.now();
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `${timestamp}_${safeName}`;
+
+    const { error } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(filePath, file, { upsert: true });
+
+    if (error) {
+      console.error('Upload error:', error);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from(STORAGE_BUCKET)
+      .getPublicUrl(filePath);
+
+    return {
+      name: file.name,
+      url: urlData.publicUrl,
+      size: file.size,
+      type: file.type,
+    };
+  } catch (err) {
+    console.error('Upload error:', err);
+    return null;
+  }
+}
+
+export async function deleteFile(url: string): Promise<void> {
+  try {
+    const parts = url.split(`/${STORAGE_BUCKET}/`);
+    if (parts.length < 2) return;
+    const filePath = parts[1];
+    await supabase.storage.from(STORAGE_BUCKET).remove([filePath]);
+  } catch (err) {
+    console.error('Delete file error:', err);
+  }
+}
+
 // --- Activities ---
+
+function parseDurationMinutes(duration: string): number {
+  if (!duration) return 0;
+  const match = duration.match(/(\d+)/);
+  return match ? parseInt(match[1], 10) : 0;
+}
 
 function activityToRow(activity: Omit<Activity, 'id' | 'createdAt' | 'archived'>) {
   const payload = {
@@ -32,6 +83,7 @@ function activityToRow(activity: Omit<Activity, 'id' | 'createdAt' | 'archived'>
     videoUrl: activity.videoUrl,
     tags: activity.tags,
     duration: activity.duration,
+    durationMinutes: activity.durationMinutes,
     groupSize: activity.groupSize,
     difficulty: activity.difficulty,
     location: activity.location,
@@ -40,9 +92,9 @@ function activityToRow(activity: Omit<Activity, 'id' | 'createdAt' | 'archived'>
   return {
     title: activity.title,
     description: JSON.stringify(payload),
-    assigned_to: MARIA_EMPLOYEE_ID,
+    assigned_to: IDEA_EMPLOYEE_ID,
     priority: activity.difficulty,
-    category: 'TEAMBUILDING',
+    category: 'idea-activity',
     resolved: false,
     is_error: false,
   };
@@ -55,6 +107,20 @@ function rowToActivity(row: TodoRow): Activity {
   } catch {
     data = {};
   }
+
+  // Handle legacy materials (string[] -> MaterialFile[])
+  let materials: MaterialFile[] = [];
+  if (Array.isArray(data.materials)) {
+    materials = data.materials.map((m: any) => {
+      if (typeof m === 'string') {
+        return { name: m, url: '', size: 0, type: 'text/plain' };
+      }
+      return m as MaterialFile;
+    });
+  }
+
+  const duration = data.duration || '';
+
   return {
     id: row.id,
     title: row.title,
@@ -62,11 +128,12 @@ function rowToActivity(row: TodoRow): Activity {
     longDescription: data.longDescription || '',
     images: data.images || [],
     links: data.links || [],
-    materials: data.materials || [],
+    materials,
     youtubeUrl: data.youtubeUrl || '',
     videoUrl: data.videoUrl || '',
     tags: data.tags || [],
-    duration: data.duration || '',
+    duration,
+    durationMinutes: data.durationMinutes || parseDurationMinutes(duration),
     groupSize: data.groupSize || '',
     difficulty: data.difficulty || 'medium',
     location: data.location || 'begge',
@@ -81,7 +148,7 @@ export async function fetchActivities(): Promise<Activity[]> {
     const { data, error } = await supabase
       .from('todos')
       .select('*')
-      .eq('category', 'TEAMBUILDING')
+      .eq('category', 'idea-activity')
       .order('created_at', { ascending: false });
 
     if (error || !data) return [];
@@ -139,112 +206,14 @@ export async function updateActivity(
 
 export async function deleteActivity(id: string): Promise<{ success: boolean }> {
   try {
-    const { error } = await supabase.from('todos').delete().eq('id', id);
-    return { success: !error };
-  } catch {
-    return { success: false };
-  }
-}
+    // First fetch to clean up files
+    const activity = await fetchActivity(id);
+    if (activity) {
+      for (const mat of activity.materials) {
+        if (mat.url) await deleteFile(mat.url);
+      }
+    }
 
-// --- Idea Lists ---
-
-function ideaListToRow(list: Omit<IdeaList, 'id' | 'createdAt' | 'archived'>) {
-  const payload = {
-    description: list.description,
-    activityIds: list.activityIds,
-    author: list.author,
-  };
-  return {
-    title: list.title,
-    description: JSON.stringify(payload),
-    assigned_to: MARIA_EMPLOYEE_ID,
-    priority: 'Normal',
-    category: 'IDEA_LIST',
-    resolved: false,
-    is_error: false,
-  };
-}
-
-function rowToIdeaList(row: TodoRow): IdeaList {
-  let data: any = {};
-  try {
-    data = JSON.parse(row.description || '{}');
-  } catch {
-    data = {};
-  }
-  return {
-    id: row.id,
-    title: row.title,
-    description: data.description || '',
-    activityIds: data.activityIds || [],
-    author: data.author || 'Ukendt',
-    createdAt: row.created_at,
-    archived: row.resolved,
-  };
-}
-
-export async function fetchIdeaLists(): Promise<IdeaList[]> {
-  try {
-    const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .eq('category', 'IDEA_LIST')
-      .order('created_at', { ascending: false });
-
-    if (error || !data) return [];
-    return (data as TodoRow[]).map(rowToIdeaList);
-  } catch {
-    return [];
-  }
-}
-
-export async function fetchIdeaList(id: string): Promise<IdeaList | null> {
-  try {
-    const { data, error } = await supabase
-      .from('todos')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error || !data) return null;
-    return rowToIdeaList(data as TodoRow);
-  } catch {
-    return null;
-  }
-}
-
-export async function createIdeaList(
-  list: Omit<IdeaList, 'id' | 'createdAt' | 'archived'>
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const row = ideaListToRow(list);
-    const { error } = await supabase.from('todos').insert(row);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
-  } catch {
-    return { success: false, error: 'Uventet fejl' };
-  }
-}
-
-export async function updateIdeaList(
-  id: string,
-  list: Omit<IdeaList, 'id' | 'createdAt' | 'archived'>
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    const row = ideaListToRow(list);
-    const { error } = await supabase
-      .from('todos')
-      .update(row)
-      .eq('id', id);
-    if (error) return { success: false, error: error.message };
-    return { success: true };
-  } catch {
-    return { success: false, error: 'Uventet fejl' };
-  }
-}
-
-export async function deleteIdeaList(id: string): Promise<{ success: boolean }> {
-  try {
     const { error } = await supabase.from('todos').delete().eq('id', id);
     return { success: !error };
   } catch {
