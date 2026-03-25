@@ -76,6 +76,7 @@ function activityToRow(activity: Omit<Activity, 'id' | 'createdAt' | 'archived'>
   const payload = {
     shortDescription: activity.shortDescription,
     longDescription: activity.longDescription,
+    execution: activity.execution,
     images: activity.images,
     links: activity.links,
     materials: activity.materials,
@@ -128,6 +129,7 @@ function rowToActivity(row: TodoRow): Activity {
     title: row.title,
     shortDescription: data.shortDescription || '',
     longDescription: data.longDescription || '',
+    execution: data.execution || '',
     images: data.images || [],
     links: data.links || [],
     materials,
