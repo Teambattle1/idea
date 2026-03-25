@@ -14,6 +14,11 @@ import {
   FileText,
   File as FileIcon,
   Image as ImageIcon,
+  DollarSign,
+  Building2,
+  Phone,
+  MessageCircle,
+  Mail,
 } from 'lucide-react';
 import { fetchActivity, deleteActivity } from '../lib/supabase';
 import { Activity, MaterialFile, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
@@ -281,6 +286,61 @@ const ActivityDetailPage = () => {
                   {link.label}
                 </a>
               ))}
+            </div>
+          </div>
+        )}
+        {/* Costs */}
+        {activity.costs.length > 0 && (
+          <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
+            <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-yellow-400" />
+              Omkostninger
+            </h2>
+            <div className="space-y-2">
+              {activity.costs.map((cost, i) => (
+                <div key={i} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2 text-gray-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-shrink-0" />
+                    {cost.description}
+                  </span>
+                  {cost.price && <span className="text-yellow-400 font-medium">{cost.price}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Contact */}
+        {(activity.contact.company || activity.contact.phone || activity.contact.email) && (
+          <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
+            <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-blue-400" />
+              Kontakt
+            </h2>
+            <div className="space-y-2 text-sm">
+              {activity.contact.company && (
+                <p className="text-white font-medium">{activity.contact.company}</p>
+              )}
+              <div className="flex flex-wrap gap-4">
+                {activity.contact.phone && (
+                  <a href={`tel:${activity.contact.phone}`} className="flex items-center gap-1.5 text-gray-300 hover:text-battle-orange transition-colors">
+                    <Phone className="w-4 h-4" />
+                    {activity.contact.phone}
+                  </a>
+                )}
+                {activity.contact.whatsapp && (
+                  <a href={`https://wa.me/${activity.contact.whatsapp.replace(/[^0-9+]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-green-400 hover:text-green-300 transition-colors">
+                    <MessageCircle className="w-4 h-4" />
+                    {activity.contact.whatsapp}
+                  </a>
+                )}
+                {activity.contact.email && (
+                  <a href={`mailto:${activity.contact.email}`} className="flex items-center gap-1.5 text-gray-300 hover:text-battle-orange transition-colors">
+                    <Mail className="w-4 h-4" />
+                    {activity.contact.email}
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         )}

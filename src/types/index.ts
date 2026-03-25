@@ -5,6 +5,18 @@ export interface MaterialFile {
   type: string;
 }
 
+export interface CostItem {
+  description: string;
+  price: string;
+}
+
+export interface ContactInfo {
+  company: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+}
+
 export interface Activity {
   id: string;
   title: string;
@@ -13,6 +25,8 @@ export interface Activity {
   images: string[];
   links: ActivityLink[];
   materials: MaterialFile[];
+  costs: CostItem[];
+  contact: ContactInfo;
   youtubeUrl: string;
   videoUrl: string;
   tags: string[];

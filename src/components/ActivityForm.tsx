@@ -11,8 +11,13 @@ import {
   Upload,
   FileText,
   File as FileIcon,
+  DollarSign,
+  Building2,
+  Phone,
+  MessageCircle,
+  Mail,
 } from 'lucide-react';
-import { Activity, ActivityLink, MaterialFile, SUGGESTED_TAGS } from '../types';
+import { Activity, ActivityLink, CostItem, MaterialFile, SUGGESTED_TAGS } from '../types';
 import { uploadFile } from '../lib/supabase';
 import TagBadge from './TagBadge';
 import ImportSection from './ImportSection';
@@ -26,6 +31,8 @@ const emptyForm: FormData = {
   images: [],
   links: [],
   materials: [],
+  costs: [],
+  contact: { company: '', phone: '', whatsapp: '', email: '' },
   youtubeUrl: '',
   videoUrl: '',
   tags: [],
@@ -65,8 +72,11 @@ const ActivityForm = ({
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newImageUrl, setNewImageUrl] = useState('');
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
   const [newLink, setNewLink] = useState<ActivityLink>({ label: '', url: '' });
+  const [newCost, setNewCost] = useState<CostItem>({ description: '', price: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageUploadRef = useRef<HTMLInputElement>(null);
 
   const handleImport = (data: Partial<FormData>) => {
     setForm((prev) => {
@@ -123,6 +133,44 @@ const ActivityForm = ({
 
   const removeImage = (index: number) => {
     update('images', form.images.filter((_, i) => i !== index));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingImages(true);
+    const newImages = [...form.images];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!file.type.startsWith('image/')) continue;
+      if (file.size > 10 * 1024 * 1024) {
+        setError(`Billedet "${file.name}" er for stort (max 10MB)`);
+        continue;
+      }
+      const uploaded = await uploadFile(file);
+      if (uploaded) {
+        newImages.push(uploaded.url);
+      } else {
+        setError(`Kunne ikke uploade "${file.name}"`);
+      }
+    }
+
+    update('images', newImages);
+    setIsUploadingImages(false);
+    if (imageUploadRef.current) imageUploadRef.current.value = '';
+  };
+
+  const addCost = () => {
+    if (newCost.description.trim()) {
+      update('costs', [...form.costs, { description: newCost.description.trim(), price: newCost.price.trim() }]);
+      setNewCost({ description: '', price: '' });
+    }
+  };
+
+  const removeCost = (index: number) => {
+    update('costs', form.costs.filter((_, i) => i !== index));
   };
 
   const addLink = () => {
@@ -350,6 +398,45 @@ const ActivityForm = ({
           </div>
         )}
 
+        {/* Direct image upload */}
+        <div>
+          <input
+            ref={imageUploadRef}
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+            id="image-upload"
+          />
+          <label
+            htmlFor="image-upload"
+            className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+              isUploadingImages
+                ? 'border-battle-orange/50 bg-battle-orange/10 text-battle-orange cursor-wait'
+                : 'border-white/20 hover:border-blue-400/50 text-gray-400 hover:text-white'
+            }`}
+          >
+            {isUploadingImages ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Uploader billeder...
+              </>
+            ) : (
+              <>
+                <Upload className="w-5 h-5" />
+                Upload billeder direkte
+              </>
+            )}
+          </label>
+        </div>
+
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="flex-1 border-t border-white/10" />
+          eller paste URL
+          <span className="flex-1 border-t border-white/10" />
+        </div>
+
         <div className="flex gap-2">
           <input
             type="url"
@@ -491,6 +578,114 @@ const ActivityForm = ({
           >
             <Plus className="w-4 h-4" />
           </button>
+        </div>
+      </section>
+
+      {/* Costs */}
+      <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
+        <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-yellow-400" />
+          Omkostninger
+        </h3>
+
+        {form.costs.length > 0 && (
+          <div className="space-y-2">
+            {form.costs.map((cost, i) => (
+              <div key={i} className="flex items-center gap-2 bg-battle-dark rounded-lg px-3 py-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 flex-shrink-0" />
+                <span className="text-sm text-white flex-1">{cost.description}</span>
+                {cost.price && <span className="text-sm text-yellow-400 font-medium">{cost.price}</span>}
+                <button type="button" onClick={() => removeCost(i)} className="text-red-400 hover:text-red-300">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newCost.description}
+            onChange={(e) => setNewCost((c) => ({ ...c, description: e.target.value }))}
+            placeholder="Materiale / post"
+            className="flex-1 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+          />
+          <input
+            type="text"
+            value={newCost.price}
+            onChange={(e) => setNewCost((c) => ({ ...c, price: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCost())}
+            placeholder="Pris (f.eks. 500 kr)"
+            className="w-1/3 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+          />
+          <button
+            type="button"
+            onClick={addCost}
+            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </section>
+
+      {/* Contact / Company */}
+      <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
+        <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
+          <Building2 className="w-4 h-4 text-blue-400" />
+          Firma & Kontakt
+        </h3>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+            <Building2 className="w-3 h-3" /> Firma
+          </label>
+          <input
+            type="text"
+            value={form.contact.company}
+            onChange={(e) => update('contact', { ...form.contact, company: e.target.value })}
+            placeholder="Firmanavn"
+            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+              <Phone className="w-3 h-3" /> Mobil
+            </label>
+            <input
+              type="tel"
+              value={form.contact.phone}
+              onChange={(e) => update('contact', { ...form.contact, phone: e.target.value })}
+              placeholder="+45 12345678"
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+              <MessageCircle className="w-3 h-3" /> WhatsApp
+            </label>
+            <input
+              type="tel"
+              value={form.contact.whatsapp}
+              onChange={(e) => update('contact', { ...form.contact, whatsapp: e.target.value })}
+              placeholder="+45 12345678"
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+              <Mail className="w-3 h-3" /> Email
+            </label>
+            <input
+              type="email"
+              value={form.contact.email}
+              onChange={(e) => update('contact', { ...form.contact, email: e.target.value })}
+              placeholder="email@firma.dk"
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+            />
+          </div>
         </div>
       </section>
 
