@@ -28,6 +28,7 @@ const emptyForm: FormData = {
   title: '',
   shortDescription: '',
   longDescription: '',
+  execution: '',
   images: [],
   links: [],
   materials: [],
@@ -273,6 +274,17 @@ const ActivityForm = ({
             value={form.longDescription}
             onChange={(e) => update('longDescription', e.target.value)}
             placeholder="Detaljeret beskrivelse af aktiviteten, regler, tips mm."
+            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
+            rows={6}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Eksekvering</label>
+          <textarea
+            value={form.execution}
+            onChange={(e) => update('execution', e.target.value)}
+            placeholder="Hvordan afvikles aktiviteten? Trin-for-trin, opsætning, forløb mm."
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
             rows={6}
           />

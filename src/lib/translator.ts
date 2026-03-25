@@ -58,28 +58,32 @@ export interface TranslatedActivity {
   title: string;
   shortDescription: string;
   longDescription: string;
+  execution: string;
 }
 
 export async function translateActivity(
   title: string,
   shortDescription: string,
   longDescription: string,
+  execution: string,
   from: string,
   to: string
 ): Promise<TranslatedActivity> {
   if (from === to) {
-    return { title, shortDescription, longDescription };
+    return { title, shortDescription, longDescription, execution };
   }
 
-  const [tTitle, tShort, tLong] = await Promise.all([
+  const [tTitle, tShort, tLong, tExec] = await Promise.all([
     translateText(title, from, to),
     translateText(shortDescription, from, to),
     translateText(longDescription, from, to),
+    translateText(execution, from, to),
   ]);
 
   return {
     title: tTitle,
     shortDescription: tShort,
     longDescription: tLong,
+    execution: tExec,
   };
 }

@@ -85,6 +85,7 @@ const ActivityDetailPage = () => {
       activity.title,
       activity.shortDescription,
       activity.longDescription,
+      activity.execution,
       'da',
       lang.code
     );
@@ -96,6 +97,7 @@ const ActivityDetailPage = () => {
   const displayTitle = translated?.title || activity?.title || '';
   const displayShort = translated?.shortDescription || activity?.shortDescription || '';
   const displayLong = translated?.longDescription || activity?.longDescription || '';
+  const displayExecution = translated?.execution || activity?.execution || '';
 
   if (isLoading) {
     return (
@@ -278,6 +280,16 @@ const ActivityDetailPage = () => {
             <h2 className="text-white font-semibold mb-3">Beskrivelse</h2>
             <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
               {displayLong}
+            </div>
+          </div>
+        )}
+
+        {/* Execution */}
+        {displayExecution && (
+          <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
+            <h2 className="text-white font-semibold mb-3">Eksekvering</h2>
+            <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+              {displayExecution}
             </div>
           </div>
         )}

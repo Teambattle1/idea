@@ -43,6 +43,7 @@ export interface Activity {
   title: string;
   shortDescription: string;
   longDescription: string;
+  execution: string;
   images: string[];
   links: ActivityLink[];
   materials: MaterialFile[];
