@@ -138,6 +138,16 @@ function resolveUrl(url: string, base: string): string {
   return `${base.replace(/\/[^/]*$/, '/')}${url}`;
 }
 
+// Clean title: remove common prefixes like "Aktivitet - ", site names, etc.
+function cleanTitle(title: string): string {
+  let cleaned = title.trim();
+  // Remove "Aktivitet - " or "Activity - " prefix
+  cleaned = cleaned.replace(/^(Aktivitet|Activity)\s*[-–:]\s*/i, '');
+  // Remove trailing " - SiteName" patterns (e.g. " - TeamBattle")
+  cleaned = cleaned.replace(/\s*[-–|]\s*(?:TeamBattle|teambattle\.dk)$/i, '');
+  return cleaned.trim();
+}
+
 // Extract title - first significant line of text
 function extractTitle(text: string): string {
   const lines = text.split('\n').map((l) => l.trim()).filter((l) => l.length > 2);
@@ -158,7 +168,7 @@ export function extractActivityFromText(text: string): PartialActivity {
   const result: PartialActivity = {};
 
   // Title
-  result.title = extractTitle(text);
+  result.title = cleanTitle(extractTitle(text));
 
   // Duration
   const duration = extractDuration(text);
@@ -205,7 +215,7 @@ export function extractActivityFromHtml(html: string, url: string): PartialActiv
   // Extract meta title
   const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   const ogTitleMatch = html.match(/<meta\s+(?:property|name)=["']og:title["']\s+content=["']([^"']+)["']/i);
-  result.title = ogTitleMatch?.[1] || titleMatch?.[1]?.trim() || '';
+  result.title = cleanTitle(ogTitleMatch?.[1] || titleMatch?.[1]?.trim() || '');
 
   // Extract meta description
   const descMatch = html.match(/<meta\s+name=["']description["']\s+content=["']([^"']+)["']/i);
