@@ -244,17 +244,6 @@ const ActivityForm = ({
           />
         </div>
 
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">Dit navn *</label>
-          <input
-            type="text"
-            value={form.author}
-            onChange={(e) => update('author', e.target.value)}
-            placeholder="Hvem opretter denne idé?"
-            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
-            required
-          />
-        </div>
 
         <div>
           <label className="block text-xs text-gray-400 mb-1">Kort beskrivelse</label>
@@ -714,6 +703,18 @@ const ActivityForm = ({
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">GameOwner *</label>
+          <input
+            type="text"
+            value={form.author}
+            onChange={(e) => update('author', e.target.value)}
+            placeholder="Kontaktperson / ansvarlig"
+            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
+            required
+          />
         </div>
       </section>
 
