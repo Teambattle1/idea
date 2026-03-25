@@ -15,6 +15,7 @@ import {
 import { Activity, ActivityLink, MaterialFile, SUGGESTED_TAGS } from '../types';
 import { uploadFile } from '../lib/supabase';
 import TagBadge from './TagBadge';
+import ImportSection from './ImportSection';
 
 type FormData = Omit<Activity, 'id' | 'createdAt' | 'archived'>;
 
@@ -66,6 +67,31 @@ const ActivityForm = ({
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newLink, setNewLink] = useState<ActivityLink>({ label: '', url: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImport = (data: Partial<FormData>) => {
+    setForm((prev) => {
+      const merged = { ...prev };
+      if (data.title && !prev.title) merged.title = data.title;
+      if (data.shortDescription && !prev.shortDescription) merged.shortDescription = data.shortDescription;
+      if (data.longDescription && !prev.longDescription) merged.longDescription = data.longDescription;
+      if (data.duration && !prev.duration) {
+        merged.duration = data.duration;
+        merged.durationMinutes = data.durationMinutes || 0;
+      }
+      if (data.groupSize && !prev.groupSize) merged.groupSize = data.groupSize;
+      if (data.location) merged.location = data.location;
+      if (data.difficulty) merged.difficulty = data.difficulty;
+      if (data.tags && data.tags.length > 0) {
+        merged.tags = [...new Set([...prev.tags, ...data.tags])];
+      }
+      if (data.images && data.images.length > 0) {
+        merged.images = [...new Set([...prev.images, ...data.images])];
+      }
+      if (data.youtubeUrl && !prev.youtubeUrl) merged.youtubeUrl = data.youtubeUrl;
+      if (data.videoUrl && !prev.videoUrl) merged.videoUrl = data.videoUrl;
+      return merged;
+    });
+  };
 
   const update = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -150,6 +176,9 @@ const ActivityForm = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Smart Import */}
+      {!initial && <ImportSection onImport={handleImport} />}
+
       {/* Basics */}
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider">Grundinfo</h3>
