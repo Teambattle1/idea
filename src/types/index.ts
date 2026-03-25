@@ -12,10 +12,31 @@ export interface CostItem {
 
 export interface ContactInfo {
   company: string;
+  country: string;
   phone: string;
   whatsapp: string;
   email: string;
 }
+
+export const COUNTRIES: Record<string, { label: string; flag: string }> = {
+  '': { label: 'Vælg land', flag: '' },
+  DK: { label: 'Danmark', flag: '🇩🇰' },
+  SE: { label: 'Sverige', flag: '🇸🇪' },
+  NO: { label: 'Norge', flag: '🇳🇴' },
+  DE: { label: 'Tyskland', flag: '🇩🇪' },
+  BE: { label: 'Belgien', flag: '🇧🇪' },
+  RO: { label: 'Rumænien', flag: '🇷🇴' },
+  PT: { label: 'Portugal', flag: '🇵🇹' },
+  IL: { label: 'Israel', flag: '🇮🇱' },
+  CZ: { label: 'Tjekkiet', flag: '🇨🇿' },
+  GR: { label: 'Grækenland', flag: '🇬🇷' },
+  GB: { label: 'England', flag: '🇬🇧' },
+  US: { label: 'USA', flag: '🇺🇸' },
+  NL: { label: 'Holland', flag: '🇳🇱' },
+  FR: { label: 'Frankrig', flag: '🇫🇷' },
+  ES: { label: 'Spanien', flag: '🇪🇸' },
+  IT: { label: 'Italien', flag: '🇮🇹' },
+};
 
 export interface Activity {
   id: string;

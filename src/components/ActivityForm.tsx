@@ -17,7 +17,7 @@ import {
   MessageCircle,
   Mail,
 } from 'lucide-react';
-import { Activity, ActivityLink, CostItem, MaterialFile, SUGGESTED_TAGS } from '../types';
+import { Activity, ActivityLink, CostItem, COUNTRIES, MaterialFile, SUGGESTED_TAGS } from '../types';
 import { uploadFile } from '../lib/supabase';
 import TagBadge from './TagBadge';
 import ImportSection from './ImportSection';
@@ -32,7 +32,7 @@ const emptyForm: FormData = {
   links: [],
   materials: [],
   costs: [],
-  contact: { company: '', phone: '', whatsapp: '', email: '' },
+  contact: { company: '', country: '', phone: '', whatsapp: '', email: '' },
   youtubeUrl: '',
   videoUrl: '',
   tags: [],
@@ -636,17 +636,33 @@ const ActivityForm = ({
           Firma & Kontakt
         </h3>
 
-        <div>
-          <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-            <Building2 className="w-3 h-3" /> Firma
-          </label>
-          <input
-            type="text"
-            value={form.contact.company}
-            onChange={(e) => update('contact', { ...form.contact, company: e.target.value })}
-            placeholder="Firmanavn"
-            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="sm:col-span-2">
+            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+              <Building2 className="w-3 h-3" /> Firma
+            </label>
+            <input
+              type="text"
+              value={form.contact.company}
+              onChange={(e) => update('contact', { ...form.contact, company: e.target.value })}
+              placeholder="Firmanavn"
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Land</label>
+            <select
+              value={form.contact.country}
+              onChange={(e) => update('contact', { ...form.contact, country: e.target.value })}
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-battle-orange"
+            >
+              {Object.entries(COUNTRIES).map(([code, { label, flag }]) => (
+                <option key={code} value={code}>
+                  {flag ? `${flag} ${label}` : label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
