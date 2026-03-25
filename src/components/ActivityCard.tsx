@@ -1,6 +1,17 @@
 import { Link } from 'react-router-dom';
 import { Clock, Users, MapPin, Play, Image as ImageIcon, FileText } from 'lucide-react';
 import { Activity, COUNTRIES, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+
+function countryFlag(code: string): string {
+  // First try COUNTRIES map
+  if (COUNTRIES[code]?.flag) return COUNTRIES[code].flag;
+  // Convert 2-letter code to flag emoji (e.g. "DK" -> 🇩🇰)
+  const upper = code.toUpperCase();
+  if (upper.length === 2) {
+    return String.fromCodePoint(...[...upper].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+  }
+  return '';
+}
 import TagBadge from './TagBadge';
 
 const ActivityCard = ({ activity }: { activity: Activity }) => {
@@ -45,8 +56,8 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
 
         {activity.contact?.company && (
           <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
-            {activity.contact.country && COUNTRIES[activity.contact.country]?.flag && (
-              <span>{COUNTRIES[activity.contact.country].flag}</span>
+            {activity.contact.country && (
+              <span>{countryFlag(activity.contact.country)}</span>
             )}
             {activity.contact.company}
           </p>
