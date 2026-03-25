@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Clock, Users, MapPin, Play, Image as ImageIcon, FileText } from 'lucide-react';
-import { Activity, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+import { Activity, COUNTRIES, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
 import TagBadge from './TagBadge';
 
 const ActivityCard = ({ activity }: { activity: Activity }) => {
@@ -38,10 +38,19 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
 
       <div className="p-5">
         <Link to={`/activity/${activity.id}`}>
-          <h3 className="text-white font-semibold text-lg mb-1 group-hover:text-battle-orange transition-colors">
+          <h3 className="text-white font-semibold text-lg mb-0.5 group-hover:text-battle-orange transition-colors">
             {activity.title}
           </h3>
         </Link>
+
+        {activity.contact?.company && (
+          <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+            {activity.contact.country && COUNTRIES[activity.contact.country]?.flag && (
+              <span>{COUNTRIES[activity.contact.country].flag}</span>
+            )}
+            {activity.contact.company}
+          </p>
+        )}
 
         <p className="text-gray-400 text-sm mb-3 line-clamp-2">
           {activity.shortDescription}

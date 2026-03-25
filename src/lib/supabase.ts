@@ -132,7 +132,7 @@ function rowToActivity(row: TodoRow): Activity {
     links: data.links || [],
     materials,
     costs: data.costs || [],
-    contact: data.contact || { company: '', phone: '', whatsapp: '', email: '' },
+    contact: data.contact || { company: '', country: '', phone: '', whatsapp: '', email: '' },
     youtubeUrl: data.youtubeUrl || '',
     videoUrl: data.videoUrl || '',
     tags: data.tags || [],

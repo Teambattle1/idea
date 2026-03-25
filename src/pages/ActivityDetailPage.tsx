@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -21,12 +21,14 @@ import {
   Mail,
 } from 'lucide-react';
 import { fetchActivity, deleteActivity } from '../lib/supabase';
-import { Activity, MaterialFile, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+import { Activity, COUNTRIES, MaterialFile, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
 import Header from '../components/Header';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import ImageGallery from '../components/ImageGallery';
 import TagBadge from '../components/TagBadge';
 import ShareButton from '../components/ShareButton';
+import LanguageSelector from '../components/LanguageSelector';
+import { translateActivity, TranslatedActivity, TranslationLanguage } from '../lib/translator';
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -46,6 +48,9 @@ const ActivityDetailPage = () => {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [currentLang, setCurrentLang] = useState('da');
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translated, setTranslated] = useState<TranslatedActivity | null>(null);
 
   useEffect(() => {
     if (id) loadActivity(id);
@@ -56,6 +61,8 @@ const ActivityDetailPage = () => {
     const data = await fetchActivity(activityId);
     setActivity(data);
     setIsLoading(false);
+    setCurrentLang('da');
+    setTranslated(null);
   };
 
   const handleDelete = async () => {
@@ -63,6 +70,32 @@ const ActivityDetailPage = () => {
     const result = await deleteActivity(id);
     if (result.success) navigate('/');
   };
+
+  const handleLanguageChange = useCallback(async (lang: TranslationLanguage) => {
+    if (!activity) return;
+    setCurrentLang(lang.code);
+
+    if (lang.code === 'da') {
+      setTranslated(null);
+      return;
+    }
+
+    setIsTranslating(true);
+    const result = await translateActivity(
+      activity.title,
+      activity.shortDescription,
+      activity.longDescription,
+      'da',
+      lang.code
+    );
+    setTranslated(result);
+    setIsTranslating(false);
+  }, [activity]);
+
+  // Use translated or original content
+  const displayTitle = translated?.title || activity?.title || '';
+  const displayShort = translated?.shortDescription || activity?.shortDescription || '';
+  const displayLong = translated?.longDescription || activity?.longDescription || '';
 
   if (isLoading) {
     return (
@@ -106,6 +139,11 @@ const ActivityDetailPage = () => {
             Alle idéer
           </Link>
           <div className="flex items-center gap-2">
+            <LanguageSelector
+              current={currentLang}
+              onChange={handleLanguageChange}
+              isTranslating={isTranslating}
+            />
             <ShareButton path={`/activity/${activity.id}`} />
             <Link
               to={`/edit/${activity.id}`}
@@ -142,9 +180,17 @@ const ActivityDetailPage = () => {
 
         {/* Title section */}
         <div className="mb-6">
-          <h1 className="text-3xl font-bold text-white mb-2">{activity.title}</h1>
-          {activity.shortDescription && (
-            <p className="text-gray-400 text-lg">{activity.shortDescription}</p>
+          <h1 className="text-3xl font-bold text-white mb-1">{displayTitle}</h1>
+          {activity.contact?.company && (
+            <p className="text-sm text-gray-400 mb-2 flex items-center gap-1.5">
+              {activity.contact.country && COUNTRIES[activity.contact.country]?.flag && (
+                <span className="text-base">{COUNTRIES[activity.contact.country].flag}</span>
+              )}
+              {activity.contact.company}
+            </p>
+          )}
+          {displayShort && (
+            <p className="text-gray-400 text-lg">{displayShort}</p>
           )}
         </div>
 
@@ -227,11 +273,11 @@ const ActivityDetailPage = () => {
         )}
 
         {/* Long description */}
-        {activity.longDescription && (
+        {displayLong && (
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
             <h2 className="text-white font-semibold mb-3">Beskrivelse</h2>
             <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
-              {activity.longDescription}
+              {displayLong}
             </div>
           </div>
         )}
