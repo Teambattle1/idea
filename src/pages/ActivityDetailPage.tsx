@@ -22,6 +22,15 @@ import {
 } from 'lucide-react';
 import { fetchActivity, deleteActivity } from '../lib/supabase';
 import { Activity, COUNTRIES, MaterialFile, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+
+function countryFlag(code: string): string {
+  if (COUNTRIES[code]?.flag) return COUNTRIES[code].flag;
+  const upper = code.toUpperCase();
+  if (upper.length === 2) {
+    return String.fromCodePoint(...[...upper].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+  }
+  return '';
+}
 import Header from '../components/Header';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import ImageGallery from '../components/ImageGallery';
@@ -185,8 +194,8 @@ const ActivityDetailPage = () => {
           <h1 className="text-3xl font-bold text-white mb-1">{displayTitle}</h1>
           {activity.contact?.company && (
             <p className="text-sm text-gray-400 mb-2 flex items-center gap-1.5">
-              {activity.contact.country && COUNTRIES[activity.contact.country]?.flag && (
-                <span className="text-base">{COUNTRIES[activity.contact.country].flag}</span>
+              {activity.contact.country && (
+                <span className="text-base">{countryFlag(activity.contact.country)}</span>
               )}
               {activity.contact.company}
             </p>
