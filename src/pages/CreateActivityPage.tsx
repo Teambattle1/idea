@@ -19,10 +19,10 @@ const CreateActivityPage = () => {
           Tilbage
         </Link>
 
-        <h2 className="text-2xl font-bold text-white mb-6">Opret ny aktivitet</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">Opret ny idé</h2>
 
         <ActivityForm
-          submitLabel="Opret aktivitet"
+          submitLabel="Opret idé"
           onSubmit={async (data) => {
             const result = await createActivity(data);
             if (result.success) navigate('/');

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Save,
   Loader2,
@@ -8,9 +8,12 @@ import {
   Image as ImageIcon,
   Youtube,
   Video,
-  Package,
+  Upload,
+  FileText,
+  File as FileIcon,
 } from 'lucide-react';
-import { Activity, ActivityLink, SUGGESTED_TAGS } from '../types';
+import { Activity, ActivityLink, MaterialFile, SUGGESTED_TAGS } from '../types';
+import { uploadFile } from '../lib/supabase';
 import TagBadge from './TagBadge';
 
 type FormData = Omit<Activity, 'id' | 'createdAt' | 'archived'>;
@@ -26,11 +29,26 @@ const emptyForm: FormData = {
   videoUrl: '',
   tags: [],
   duration: '',
+  durationMinutes: 0,
   groupSize: '',
   difficulty: 'medium',
   location: 'begge',
   author: '',
 };
+
+const ACCEPTED_FILE_TYPES = '.pptx,.docx,.pdf,.png,.jpg,.jpeg,.gif,.xlsx,.txt,.csv,.mp4,.mov';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getFileIcon(type: string) {
+  if (type.startsWith('image/')) return ImageIcon;
+  if (type.includes('pdf')) return FileText;
+  return FileIcon;
+}
 
 const ActivityForm = ({
   initial,
@@ -43,13 +61,20 @@ const ActivityForm = ({
 }) => {
   const [form, setForm] = useState<FormData>(initial || emptyForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [newLink, setNewLink] = useState<ActivityLink>({ label: '', url: '' });
-  const [newMaterial, setNewMaterial] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const update = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const handleDurationChange = (value: string) => {
+    update('duration', value);
+    const match = value.match(/(\d+)/);
+    update('durationMinutes', match ? parseInt(match[1], 10) : 0);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,11 +110,30 @@ const ActivityForm = ({
     update('links', form.links.filter((_, i) => i !== index));
   };
 
-  const addMaterial = () => {
-    if (newMaterial.trim()) {
-      update('materials', [...form.materials, newMaterial.trim()]);
-      setNewMaterial('');
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const newMaterials: MaterialFile[] = [...form.materials];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 50 * 1024 * 1024) {
+        setError(`Filen "${file.name}" er for stor (max 50MB)`);
+        continue;
+      }
+      const uploaded = await uploadFile(file);
+      if (uploaded) {
+        newMaterials.push(uploaded);
+      } else {
+        setError(`Kunne ikke uploade "${file.name}"`);
+      }
     }
+
+    update('materials', newMaterials);
+    setIsUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const removeMaterial = (index: number) => {
@@ -128,7 +172,7 @@ const ActivityForm = ({
             type="text"
             value={form.author}
             onChange={(e) => update('author', e.target.value)}
-            placeholder="Hvem opretter denne aktivitet?"
+            placeholder="Hvem opretter denne idé?"
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
             required
           />
@@ -159,11 +203,11 @@ const ActivityForm = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Varighed</label>
+            <label className="block text-xs text-gray-400 mb-1">Varighed (minutter)</label>
             <input
               type="text"
               value={form.duration}
-              onChange={(e) => update('duration', e.target.value)}
+              onChange={(e) => handleDurationChange(e.target.value)}
               placeholder="f.eks. 30 min"
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
             />
@@ -296,6 +340,83 @@ const ActivityForm = ({
         </div>
       </section>
 
+      {/* File Upload - Materials */}
+      <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
+        <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
+          <Upload className="w-4 h-4 text-emerald-400" />
+          Materialer (filer)
+        </h3>
+        <p className="text-xs text-gray-500">
+          Upload materialer som PDF, PowerPoint, Word, billeder mm. (max 50MB per fil)
+        </p>
+
+        {form.materials.length > 0 && (
+          <div className="space-y-2">
+            {form.materials.map((mat, i) => {
+              const Icon = getFileIcon(mat.type);
+              return (
+                <div key={i} className="flex items-center gap-3 bg-battle-dark rounded-lg px-4 py-3">
+                  <Icon className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-white truncate">{mat.name}</p>
+                    <p className="text-xs text-gray-500">{formatFileSize(mat.size)}</p>
+                  </div>
+                  {mat.url && (
+                    <a
+                      href={mat.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-battle-orange hover:text-battle-orangeLight"
+                    >
+                      Åbn
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => removeMaterial(i)}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept={ACCEPTED_FILE_TYPES}
+            onChange={handleFileUpload}
+            className="hidden"
+            id="file-upload"
+          />
+          <label
+            htmlFor="file-upload"
+            className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+              isUploading
+                ? 'border-battle-orange/50 bg-battle-orange/10 text-battle-orange'
+                : 'border-white/20 hover:border-battle-orange/50 text-gray-400 hover:text-white'
+            }`}
+          >
+            {isUploading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Uploader...
+              </>
+            ) : (
+              <>
+                <Upload className="w-5 h-5" />
+                Vælg filer eller træk hertil
+              </>
+            )}
+          </label>
+        </div>
+      </section>
+
       {/* Links */}
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
@@ -337,48 +458,6 @@ const ActivityForm = ({
           <button
             type="button"
             onClick={addLink}
-            className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-      </section>
-
-      {/* Materials */}
-      <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
-        <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
-          <Package className="w-4 h-4 text-emerald-400" />
-          Materialer
-        </h3>
-
-        {form.materials.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {form.materials.map((mat, i) => (
-              <span
-                key={i}
-                className="flex items-center gap-1.5 bg-battle-dark px-3 py-1.5 rounded-full text-sm text-white"
-              >
-                {mat}
-                <button type="button" onClick={() => removeMaterial(i)} className="text-red-400 hover:text-red-300">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={newMaterial}
-            onChange={(e) => setNewMaterial(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addMaterial())}
-            placeholder="Tilføj materiale (f.eks. bold, reb, papir)"
-            className="flex-1 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
-          />
-          <button
-            type="button"
-            onClick={addMaterial}
             className="px-3 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-colors"
           >
             <Plus className="w-4 h-4" />

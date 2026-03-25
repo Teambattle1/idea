@@ -6,19 +6,34 @@ import {
   Users,
   MapPin,
   ExternalLink,
-  Package,
   Pencil,
   Trash2,
   Loader2,
   Video,
+  Download,
+  FileText,
+  File as FileIcon,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { fetchActivity, deleteActivity } from '../lib/supabase';
-import { Activity, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+import { Activity, MaterialFile, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
 import Header from '../components/Header';
 import YouTubeEmbed from '../components/YouTubeEmbed';
 import ImageGallery from '../components/ImageGallery';
 import TagBadge from '../components/TagBadge';
 import ShareButton from '../components/ShareButton';
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getFileIcon(type: string) {
+  if (type.startsWith('image/')) return ImageIcon;
+  if (type.includes('pdf')) return FileText;
+  return FileIcon;
+}
 
 const ActivityDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -60,7 +75,7 @@ const ActivityDetailPage = () => {
       <div className="min-h-screen bg-battle-black">
         <Header />
         <div className="text-center py-20">
-          <p className="text-gray-500 text-lg mb-4">Aktivitet ikke fundet</p>
+          <p className="text-gray-500 text-lg mb-4">Idé ikke fundet</p>
           <Link to="/" className="text-battle-orange hover:underline">
             Tilbage til oversigten
           </Link>
@@ -68,6 +83,8 @@ const ActivityDetailPage = () => {
       </div>
     );
   }
+
+  const uploadedFiles = activity.materials.filter((m) => m.url);
 
   return (
     <div className="min-h-screen bg-battle-black">
@@ -81,7 +98,7 @@ const ActivityDetailPage = () => {
             className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
-            Alle aktiviteter
+            Alle idéer
           </Link>
           <div className="flex items-center gap-2">
             <ShareButton path={`/activity/${activity.id}`} />
@@ -214,21 +231,36 @@ const ActivityDetailPage = () => {
           </div>
         )}
 
-        {/* Materials */}
-        {activity.materials.length > 0 && (
+        {/* Materials / Files */}
+        {uploadedFiles.length > 0 && (
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
             <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Package className="w-4 h-4 text-emerald-400" />
+              <Download className="w-4 h-4 text-emerald-400" />
               Materialer
             </h2>
-            <ul className="space-y-1.5">
-              {activity.materials.map((mat, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-gray-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                  {mat}
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2">
+              {uploadedFiles.map((mat: MaterialFile, i: number) => {
+                const Icon = getFileIcon(mat.type);
+                return (
+                  <a
+                    key={i}
+                    href={mat.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 bg-battle-dark rounded-lg px-4 py-3 hover:border-battle-orange/30 border border-white/5 transition-colors group"
+                  >
+                    <Icon className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-white group-hover:text-battle-orange transition-colors truncate">
+                        {mat.name}
+                      </p>
+                      <p className="text-xs text-gray-500">{formatFileSize(mat.size)}</p>
+                    </div>
+                    <Download className="w-4 h-4 text-gray-500 group-hover:text-battle-orange transition-colors flex-shrink-0" />
+                  </a>
+                );
+              })}
+            </div>
           </div>
         )}
 
