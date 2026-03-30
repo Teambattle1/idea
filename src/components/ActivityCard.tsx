@@ -77,7 +77,7 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
           {activity.groupSize && (
             <span className="flex items-center gap-1">
               <Users className="w-3.5 h-3.5" />
-              {activity.groupSize} pers.
+              {activity.groupSize} ppl
             </span>
           )}
           <span className="flex items-center gap-1">
@@ -104,7 +104,7 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
           {fileCount > 0 && (
             <span className="flex items-center gap-1 text-emerald-400">
               <FileText className="w-3.5 h-3.5" />
-              {fileCount} fil{fileCount !== 1 ? 'er' : ''}
+              {fileCount} file{fileCount !== 1 ? 's' : ''}
             </span>
           )}
         </div>
@@ -121,12 +121,12 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
         )}
 
         <div className="flex items-center justify-between pt-2 border-t border-white/5">
-          <span className="text-xs text-gray-600">af {activity.author}</span>
+          <span className="text-xs text-gray-600">by {activity.author}</span>
           <Link
             to={`/activity/${activity.id}`}
             className="text-xs text-battle-orange hover:text-battle-orangeLight transition-colors"
           >
-            Se detaljer →
+            View details →
           </Link>
         </div>
       </div>

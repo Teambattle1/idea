@@ -19,23 +19,23 @@ export interface ContactInfo {
 }
 
 export const COUNTRIES: Record<string, { label: string; flag: string }> = {
-  '': { label: 'Vælg land', flag: '' },
-  DK: { label: 'Danmark', flag: '🇩🇰' },
-  SE: { label: 'Sverige', flag: '🇸🇪' },
-  NO: { label: 'Norge', flag: '🇳🇴' },
-  DE: { label: 'Tyskland', flag: '🇩🇪' },
-  BE: { label: 'Belgien', flag: '🇧🇪' },
-  RO: { label: 'Rumænien', flag: '🇷🇴' },
+  '': { label: 'Select country', flag: '' },
+  DK: { label: 'Denmark', flag: '🇩🇰' },
+  SE: { label: 'Sweden', flag: '🇸🇪' },
+  NO: { label: 'Norway', flag: '🇳🇴' },
+  DE: { label: 'Germany', flag: '🇩🇪' },
+  BE: { label: 'Belgium', flag: '🇧🇪' },
+  RO: { label: 'Romania', flag: '🇷🇴' },
   PT: { label: 'Portugal', flag: '🇵🇹' },
   IL: { label: 'Israel', flag: '🇮🇱' },
-  CZ: { label: 'Tjekkiet', flag: '🇨🇿' },
-  GR: { label: 'Grækenland', flag: '🇬🇷' },
-  GB: { label: 'England', flag: '🇬🇧' },
+  CZ: { label: 'Czech Republic', flag: '🇨🇿' },
+  GR: { label: 'Greece', flag: '🇬🇷' },
+  GB: { label: 'United Kingdom', flag: '🇬🇧' },
   US: { label: 'USA', flag: '🇺🇸' },
-  NL: { label: 'Holland', flag: '🇳🇱' },
-  FR: { label: 'Frankrig', flag: '🇫🇷' },
-  ES: { label: 'Spanien', flag: '🇪🇸' },
-  IT: { label: 'Italien', flag: '🇮🇹' },
+  NL: { label: 'Netherlands', flag: '🇳🇱' },
+  FR: { label: 'France', flag: '🇫🇷' },
+  ES: { label: 'Spain', flag: '🇪🇸' },
+  IT: { label: 'Italy', flag: '🇮🇹' },
 };
 
 export interface Activity {
@@ -74,19 +74,19 @@ export type ViewState =
   | { page: 'activity-detail'; id: string };
 
 export const DIFFICULTY_LABELS: Record<Activity['difficulty'], string> = {
-  let: 'Let',
+  let: 'Easy',
   medium: 'Medium',
-  svær: 'Svær',
+  svær: 'Hard',
 };
 
 export const LOCATION_LABELS: Record<Activity['location'], string> = {
-  indendørs: 'Indendørs',
-  udendørs: 'Udendørs',
-  begge: 'Begge dele',
+  indendørs: 'Indoor',
+  udendørs: 'Outdoor',
+  begge: 'Both',
 };
 
 export const DURATION_RANGES = [
-  { label: 'Alle', min: 0, max: Infinity },
+  { label: 'All', min: 0, max: Infinity },
   { label: '0-15 min', min: 0, max: 15 },
   { label: '15-30 min', min: 15, max: 30 },
   { label: '30-60 min', min: 30, max: 60 },
@@ -96,14 +96,14 @@ export const DURATION_RANGES = [
 export const SUGGESTED_TAGS = [
   'icebreaker',
   'teamwork',
-  'kommunikation',
-  'kreativitet',
-  'strategi',
-  'tillid',
+  'communication',
+  'creativity',
+  'strategy',
+  'trust',
   'energizer',
-  'refleksion',
-  'konkurrence',
-  'samarbejde',
-  'problemløsning',
-  'sjov',
+  'reflection',
+  'competition',
+  'collaboration',
+  'problem-solving',
+  'fun',
 ];

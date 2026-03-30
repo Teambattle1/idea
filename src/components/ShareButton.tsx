@@ -33,12 +33,12 @@ const ShareButton = ({ path }: { path: string }) => {
       {copied ? (
         <>
           <Check className="w-4 h-4 text-green-400" />
-          Kopieret!
+          Copied!
         </>
       ) : (
         <>
           <Share2 className="w-4 h-4" />
-          Del
+          Share
         </>
       )}
     </button>

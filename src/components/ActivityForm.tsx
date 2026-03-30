@@ -120,7 +120,7 @@ const ActivityForm = ({
     setError(null);
     const result = await onSubmit(form);
     if (!result.success) {
-      setError(result.error || 'Der opstod en fejl');
+      setError(result.error || 'An error occurred');
     }
     setIsSubmitting(false);
   };
@@ -147,14 +147,14 @@ const ActivityForm = ({
       const file = files[i];
       if (!file.type.startsWith('image/')) continue;
       if (file.size > 10 * 1024 * 1024) {
-        setError(`Billedet "${file.name}" er for stort (max 10MB)`);
+        setError(`Image "${file.name}" is too large (max 10MB)`);
         continue;
       }
       const uploaded = await uploadFile(file);
       if (uploaded) {
         newImages.push(uploaded.url);
       } else {
-        setError(`Kunne ikke uploade "${file.name}"`);
+        setError(`Could not upload "${file.name}"`);
       }
     }
 
@@ -195,14 +195,14 @@ const ActivityForm = ({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       if (file.size > 50 * 1024 * 1024) {
-        setError(`Filen "${file.name}" er for stor (max 50MB)`);
+        setError(`File "${file.name}" is too large (max 50MB)`);
         continue;
       }
       const uploaded = await uploadFile(file);
       if (uploaded) {
         newMaterials.push(uploaded);
       } else {
-        setError(`Kunne ikke uploade "${file.name}"`);
+        setError(`Could not upload "${file.name}"`);
       }
     }
 
@@ -230,15 +230,15 @@ const ActivityForm = ({
 
       {/* Basics */}
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
-        <h3 className="text-white font-semibold text-sm uppercase tracking-wider">Grundinfo</h3>
+        <h3 className="text-white font-semibold text-sm uppercase tracking-wider">Basic Info</h3>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Titel *</label>
+          <label className="block text-xs text-gray-400 mb-1">Title *</label>
           <input
             type="text"
             value={form.title}
             onChange={(e) => update('title', e.target.value)}
-            placeholder="Navnet på aktiviteten"
+            placeholder="Name of the activity"
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
             required
           />
@@ -246,34 +246,34 @@ const ActivityForm = ({
 
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Kort beskrivelse</label>
+          <label className="block text-xs text-gray-400 mb-1">Short Description</label>
           <input
             type="text"
             value={form.shortDescription}
             onChange={(e) => update('shortDescription', e.target.value)}
-            placeholder="En kort opsummering (vises på kortet)"
+            placeholder="A short summary (shown on the card)"
             maxLength={200}
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
           />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Fuld beskrivelse</label>
+          <label className="block text-xs text-gray-400 mb-1">Full Description</label>
           <textarea
             value={form.longDescription}
             onChange={(e) => update('longDescription', e.target.value)}
-            placeholder="Detaljeret beskrivelse af aktiviteten, regler, tips mm."
+            placeholder="Detailed description of the activity, rules, tips etc."
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
             rows={6}
           />
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Eksekvering</label>
+          <label className="block text-xs text-gray-400 mb-1">Execution</label>
           <textarea
             value={form.execution}
             onChange={(e) => update('execution', e.target.value)}
-            placeholder="Hvordan afvikles aktiviteten? Trin-for-trin, opsætning, forløb mm."
+            placeholder="How is the activity run? Step-by-step, setup, flow etc."
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
             rows={6}
           />
@@ -281,47 +281,47 @@ const ActivityForm = ({
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Varighed (minutter)</label>
+            <label className="block text-xs text-gray-400 mb-1">Duration (minutes)</label>
             <input
               type="text"
               value={form.duration}
               onChange={(e) => handleDurationChange(e.target.value)}
-              placeholder="f.eks. 30 min"
+              placeholder="e.g. 30 min"
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Gruppestørrelse</label>
+            <label className="block text-xs text-gray-400 mb-1">Group Size</label>
             <input
               type="text"
               value={form.groupSize}
               onChange={(e) => update('groupSize', e.target.value)}
-              placeholder="f.eks. 4-10"
+              placeholder="e.g. 4-10"
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Sværhedsgrad</label>
+            <label className="block text-xs text-gray-400 mb-1">Difficulty</label>
             <select
               value={form.difficulty}
               onChange={(e) => update('difficulty', e.target.value as Activity['difficulty'])}
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-battle-orange text-sm"
             >
-              <option value="let">Let</option>
+              <option value="let">Easy</option>
               <option value="medium">Medium</option>
-              <option value="svær">Svær</option>
+              <option value="svær">Hard</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Lokation</label>
+            <label className="block text-xs text-gray-400 mb-1">Location</label>
             <select
               value={form.location}
               onChange={(e) => update('location', e.target.value as Activity['location'])}
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white focus:outline-none focus:border-battle-orange text-sm"
             >
-              <option value="indendørs">Indendørs</option>
-              <option value="udendørs">Udendørs</option>
-              <option value="begge">Begge dele</option>
+              <option value="indendørs">Indoor</option>
+              <option value="udendørs">Outdoor</option>
+              <option value="begge">Both</option>
             </select>
           </div>
         </div>
@@ -346,7 +346,7 @@ const ActivityForm = ({
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
           <Youtube className="w-4 h-4 text-red-500" />
-          Video & Medier
+          Video & Media
         </h3>
 
         <div>
@@ -363,7 +363,7 @@ const ActivityForm = ({
         <div>
           <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
             <Video className="w-3.5 h-3.5" />
-            Video URL (direkte link til videofil)
+            Video URL (direct link to video file)
           </label>
           <input
             type="url"
@@ -379,7 +379,7 @@ const ActivityForm = ({
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
           <ImageIcon className="w-4 h-4 text-blue-400" />
-          Billeder
+          Images
         </h3>
 
         {form.images.length > 0 && (
@@ -421,12 +421,12 @@ const ActivityForm = ({
             {isUploadingImages ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Uploader billeder...
+                Uploading images...
               </>
             ) : (
               <>
                 <Upload className="w-5 h-5" />
-                Upload billeder direkte
+                Upload images directly
               </>
             )}
           </label>
@@ -434,7 +434,7 @@ const ActivityForm = ({
 
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <span className="flex-1 border-t border-white/10" />
-          eller paste URL
+          or paste URL
           <span className="flex-1 border-t border-white/10" />
         </div>
 
@@ -444,7 +444,7 @@ const ActivityForm = ({
             value={newImageUrl}
             onChange={(e) => setNewImageUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addImage())}
-            placeholder="Paste billed-URL her"
+            placeholder="Paste image URL here"
             className="flex-1 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
           />
           <button
@@ -461,10 +461,10 @@ const ActivityForm = ({
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
           <Upload className="w-4 h-4 text-emerald-400" />
-          Materialer (filer)
+          Materials (files)
         </h3>
         <p className="text-xs text-gray-500">
-          Upload materialer som PDF, PowerPoint, Word, billeder mm. (max 50MB per fil)
+          Upload materials such as PDF, PowerPoint, Word, images etc. (max 50MB per file)
         </p>
 
         {form.materials.length > 0 && (
@@ -485,7 +485,7 @@ const ActivityForm = ({
                       rel="noopener noreferrer"
                       className="text-xs text-battle-orange hover:text-battle-orangeLight"
                     >
-                      Åbn
+                      Open
                     </a>
                   )}
                   <button
@@ -522,12 +522,12 @@ const ActivityForm = ({
             {isUploading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Uploader...
+                Uploading...
               </>
             ) : (
               <>
                 <Upload className="w-5 h-5" />
-                Vælg filer eller træk hertil
+                Choose files or drag here
               </>
             )}
           </label>
@@ -561,7 +561,7 @@ const ActivityForm = ({
             type="text"
             value={newLink.label}
             onChange={(e) => setNewLink((l) => ({ ...l, label: e.target.value }))}
-            placeholder="Linknavn"
+            placeholder="Link name"
             className="w-1/3 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
           />
           <input
@@ -586,7 +586,7 @@ const ActivityForm = ({
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
           <DollarSign className="w-4 h-4 text-yellow-400" />
-          Omkostninger
+          Costs
         </h3>
 
         {form.costs.length > 0 && (
@@ -609,7 +609,7 @@ const ActivityForm = ({
             type="text"
             value={newCost.description}
             onChange={(e) => setNewCost((c) => ({ ...c, description: e.target.value }))}
-            placeholder="Materiale / post"
+            placeholder="Item / description"
             className="flex-1 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
           />
           <input
@@ -617,7 +617,7 @@ const ActivityForm = ({
             value={newCost.price}
             onChange={(e) => setNewCost((c) => ({ ...c, price: e.target.value }))}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCost())}
-            placeholder="Pris (f.eks. 500 kr)"
+            placeholder="Price (e.g. €50)"
             className="w-1/3 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
           />
           <button
@@ -634,24 +634,24 @@ const ActivityForm = ({
       <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
         <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
           <Building2 className="w-4 h-4 text-blue-400" />
-          Firma & Kontakt
+          Company & Contact
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="sm:col-span-2">
             <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <Building2 className="w-3 h-3" /> Firma
+              <Building2 className="w-3 h-3" /> Company
             </label>
             <input
               type="text"
               value={form.contact.company}
               onChange={(e) => update('contact', { ...form.contact, company: e.target.value })}
-              placeholder="Firmanavn"
+              placeholder="Company name"
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Land</label>
+            <label className="block text-xs text-gray-400 mb-1">Country</label>
             <select
               value={form.contact.country}
               onChange={(e) => update('contact', { ...form.contact, country: e.target.value })}
@@ -669,7 +669,7 @@ const ActivityForm = ({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <Phone className="w-3 h-3" /> Mobil
+              <Phone className="w-3 h-3" /> Phone
             </label>
             <input
               type="tel"
@@ -699,7 +699,7 @@ const ActivityForm = ({
               type="email"
               value={form.contact.email}
               onChange={(e) => update('contact', { ...form.contact, email: e.target.value })}
-              placeholder="email@firma.dk"
+              placeholder="email@company.com"
               className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
             />
           </div>
@@ -711,7 +711,7 @@ const ActivityForm = ({
             type="text"
             value={form.author}
             onChange={(e) => update('author', e.target.value)}
-            placeholder="Kontaktperson / ansvarlig"
+            placeholder="Contact person / responsible"
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
             required
           />
