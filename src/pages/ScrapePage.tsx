@@ -230,7 +230,7 @@ const ScrapePage = () => {
         links: [{ label: 'Source', url: item.url }],
         materials: [],
         costs: [],
-        contact: { company: '', country: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
+        contact: { company: '', country: '', address: '', city: '', zip: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
         youtubeUrl: item.data.youtubeUrl || '',
         videoUrl: item.data.videoUrl || '',
         tags: item.data.tags || [],

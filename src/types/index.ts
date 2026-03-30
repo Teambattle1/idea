@@ -13,6 +13,9 @@ export interface CostItem {
 export interface ContactInfo {
   company: string;
   country: string;
+  address: string;
+  city: string;
+  zip: string;
   website: string;
   phone: string;
   whatsapp: string;
@@ -24,6 +27,9 @@ export interface CompanyProfile {
   id: string;
   company: string;
   country: string;
+  address: string;
+  city: string;
+  zip: string;
   website: string;
   phone: string;
   whatsapp: string;
