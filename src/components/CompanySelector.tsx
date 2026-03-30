@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Building2,
+  Globe,
   Plus,
   Check,
   Loader2,
@@ -46,9 +47,11 @@ const CompanySelector = ({
   const [newCompany, setNewCompany] = useState({
     company: '',
     country: '',
+    website: '',
     phone: '',
     whatsapp: '',
     email: '',
+    notes: '',
     gameOwner: '',
   });
 
@@ -67,9 +70,11 @@ const CompanySelector = ({
     onChange({
       company: comp.company,
       country: comp.country,
+      website: comp.website,
       phone: comp.phone,
       whatsapp: comp.whatsapp,
       email: comp.email,
+      notes: comp.notes,
     });
     onAuthorChange(comp.gameOwner);
     setSelectedId(comp.id);
@@ -77,7 +82,7 @@ const CompanySelector = ({
   };
 
   const clearSelection = () => {
-    onChange({ company: '', country: '', phone: '', whatsapp: '', email: '' });
+    onChange({ company: '', country: '', website: '', phone: '', whatsapp: '', email: '', notes: '' });
     onAuthorChange('');
     setSelectedId(null);
   };
@@ -93,13 +98,15 @@ const CompanySelector = ({
       onChange({
         company: newCompany.company,
         country: newCompany.country,
+        website: newCompany.website,
         phone: newCompany.phone,
         whatsapp: newCompany.whatsapp,
         email: newCompany.email,
+        notes: newCompany.notes,
       });
       onAuthorChange(newCompany.gameOwner);
       setShowNewForm(false);
-      setNewCompany({ company: '', country: '', phone: '', whatsapp: '', email: '', gameOwner: '' });
+      setNewCompany({ company: '', country: '', website: '', phone: '', whatsapp: '', email: '', notes: '', gameOwner: '' });
     }
 
     setIsSaving(false);
@@ -118,7 +125,7 @@ const CompanySelector = ({
     <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
       <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
         <Building2 className="w-4 h-4 text-blue-400" />
-        Company & Contact
+        Game Designed By
       </h3>
 
       {/* Company selector */}
@@ -309,6 +316,28 @@ const CompanySelector = ({
             </div>
           </div>
 
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Website</label>
+            <input
+              type="url"
+              value={newCompany.website}
+              onChange={(e) => setNewCompany((c) => ({ ...c, website: e.target.value }))}
+              placeholder="https://company.com"
+              className="w-full bg-battle-grey border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Notes</label>
+            <textarea
+              value={newCompany.notes}
+              onChange={(e) => setNewCompany((c) => ({ ...c, notes: e.target.value }))}
+              placeholder="Notes about this company..."
+              className="w-full bg-battle-grey border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm resize-none"
+              rows={2}
+            />
+          </div>
+
           <button
             type="button"
             onClick={handleSaveNew}
@@ -396,15 +425,38 @@ const CompanySelector = ({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">GameOwner *</label>
+              <input
+                type="text"
+                value={author}
+                onChange={(e) => onAuthorChange(e.target.value)}
+                placeholder="Contact person / responsible"
+                className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Website</label>
+              <input
+                type="url"
+                value={contact.website}
+                onChange={(e) => onChange({ ...contact, website: e.target.value })}
+                placeholder="https://company.com"
+                className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="block text-xs text-gray-400 mb-1">GameOwner *</label>
-            <input
-              type="text"
-              value={author}
-              onChange={(e) => onAuthorChange(e.target.value)}
-              placeholder="Contact person / responsible"
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
-              required
+            <label className="block text-xs text-gray-400 mb-1">Notes</label>
+            <textarea
+              value={contact.notes}
+              onChange={(e) => onChange({ ...contact, notes: e.target.value })}
+              placeholder="Notes about this company..."
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm resize-none"
+              rows={2}
             />
           </div>
         </>
@@ -437,7 +489,15 @@ const CompanySelector = ({
             {selectedCompany.email && (
               <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {selectedCompany.email}</span>
             )}
+            {selectedCompany.website && (
+              <a href={selectedCompany.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-battle-orange hover:text-battle-orangeLight">
+                <Globe className="w-3 h-3" /> Website
+              </a>
+            )}
           </div>
+          {selectedCompany.notes && (
+            <p className="text-xs text-gray-500 mt-1">{selectedCompany.notes}</p>
+          )}
         </div>
       )}
     </section>
