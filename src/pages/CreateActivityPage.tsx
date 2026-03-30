@@ -1,5 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Globe } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { createActivity } from '../lib/supabase';
 import Header from '../components/Header';
 import ActivityForm from '../components/ActivityForm';
@@ -19,17 +19,7 @@ const CreateActivityPage = () => {
           Back
         </Link>
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Create New Idea</h2>
-          <Link
-            to="/scrape"
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 hover:text-purple-200 rounded-lg text-sm transition-colors"
-          >
-            <Globe className="w-4 h-4" />
-            Scrape
-            <span className="text-[10px] text-purple-400 opacity-70">Scan site for ideas</span>
-          </Link>
-        </div>
+        <h2 className="text-2xl font-bold text-white mb-6">Create New Idea</h2>
 
         <ActivityForm
           submitLabel="Create Idea"

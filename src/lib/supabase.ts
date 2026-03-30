@@ -142,7 +142,7 @@ function rowToActivity(row: TodoRow): Activity {
     links: data.links || [],
     materials,
     costs: data.costs || [],
-    contact: data.contact || { company: '', country: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
+    contact: data.contact || { company: '', country: '', address: '', city: '', zip: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
     youtubeUrl: data.youtubeUrl || '',
     videoUrl: data.videoUrl || '',
     tags: data.tags || [],
@@ -240,6 +240,9 @@ export async function deleteActivity(id: string): Promise<{ success: boolean }> 
 function companyToRow(company: Omit<CompanyProfile, 'id' | 'createdAt'>) {
   const payload = {
     country: company.country,
+    address: company.address,
+    city: company.city,
+    zip: company.zip,
     website: company.website,
     phone: company.phone,
     whatsapp: company.whatsapp,
@@ -269,6 +272,9 @@ function rowToCompany(row: TodoRow): CompanyProfile {
     id: row.id,
     company: row.title,
     country: data.country || '',
+    address: data.address || '',
+    city: data.city || '',
+    zip: data.zip || '',
     website: data.website || '',
     phone: data.phone || '',
     whatsapp: data.whatsapp || '',

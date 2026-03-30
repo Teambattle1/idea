@@ -34,7 +34,7 @@ const emptyForm: FormData = {
   links: [],
   materials: [],
   costs: [],
-  contact: { company: '', country: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
+  contact: { company: '', country: '', address: '', city: '', zip: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
   youtubeUrl: '',
   videoUrl: '',
   tags: [],
