@@ -11,6 +11,7 @@ import {
   Loader2,
   Video,
   Download,
+  ArrowUpRight,
   FileText,
   File as FileIcon,
   Image as ImageIcon,
@@ -38,6 +39,7 @@ import TagBadge from '../components/TagBadge';
 import ShareButton from '../components/ShareButton';
 import LanguageSelector from '../components/LanguageSelector';
 import { translateActivity, TranslatedActivity, TranslationLanguage } from '../lib/translator';
+import { downloadFlowExport } from '../lib/exportActivity';
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -155,6 +157,14 @@ const ActivityDetailPage = () => {
               onChange={handleLanguageChange}
               isTranslating={isTranslating}
             />
+            <button
+              onClick={() => downloadFlowExport(activity)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 hover:text-purple-200 rounded-lg text-sm transition-colors"
+              title="Export to FLOW"
+            >
+              <ArrowUpRight className="w-4 h-4" />
+              FLOW
+            </button>
             <ShareButton path={`/activity/${activity.id}`} />
             <Link
               to={`/edit/${activity.id}`}
