@@ -4,10 +4,10 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
   const [phase, setPhase] = useState(0); // 0=bulb, 1=text, 2=subtitle, 3=fadeout
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 400);
-    const t2 = setTimeout(() => setPhase(2), 900);
-    const t3 = setTimeout(() => setPhase(3), 1800);
-    const t4 = setTimeout(() => onComplete(), 2400);
+    const t1 = setTimeout(() => setPhase(1), 800);
+    const t2 = setTimeout(() => setPhase(2), 1800);
+    const t3 = setTimeout(() => setPhase(3), 3600);
+    const t4 = setTimeout(() => onComplete(), 4800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
   }, [onComplete]);
 
