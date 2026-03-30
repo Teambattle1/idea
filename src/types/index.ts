@@ -18,6 +18,17 @@ export interface ContactInfo {
   email: string;
 }
 
+export interface CompanyProfile {
+  id: string;
+  company: string;
+  country: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  gameOwner: string;
+  createdAt: string;
+}
+
 export const COUNTRIES: Record<string, { label: string; flag: string }> = {
   '': { label: 'Select country', flag: '' },
   DK: { label: 'Denmark', flag: '🇩🇰' },

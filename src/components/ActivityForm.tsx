@@ -12,15 +12,12 @@ import {
   FileText,
   File as FileIcon,
   DollarSign,
-  Building2,
-  Phone,
-  MessageCircle,
-  Mail,
 } from 'lucide-react';
-import { Activity, ActivityLink, CostItem, COUNTRIES, MaterialFile, SUGGESTED_TAGS } from '../types';
+import { Activity, ActivityLink, CostItem, MaterialFile, SUGGESTED_TAGS } from '../types';
 import { uploadFile } from '../lib/supabase';
 import TagBadge from './TagBadge';
 import ImportSection from './ImportSection';
+import CompanySelector from './CompanySelector';
 
 type FormData = Omit<Activity, 'id' | 'createdAt' | 'archived'>;
 
@@ -631,92 +628,12 @@ const ActivityForm = ({
       </section>
 
       {/* Contact / Company */}
-      <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
-        <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-blue-400" />
-          Company & Contact
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-2">
-            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <Building2 className="w-3 h-3" /> Company
-            </label>
-            <input
-              type="text"
-              value={form.contact.company}
-              onChange={(e) => update('contact', { ...form.contact, company: e.target.value })}
-              placeholder="Company name"
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Country</label>
-            <select
-              value={form.contact.country}
-              onChange={(e) => update('contact', { ...form.contact, country: e.target.value })}
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-battle-orange"
-            >
-              {Object.entries(COUNTRIES).map(([code, { label, flag }]) => (
-                <option key={code} value={code}>
-                  {flag ? `${flag} ${label}` : label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <Phone className="w-3 h-3" /> Phone
-            </label>
-            <input
-              type="tel"
-              value={form.contact.phone}
-              onChange={(e) => update('contact', { ...form.contact, phone: e.target.value })}
-              placeholder="+45 12345678"
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <MessageCircle className="w-3 h-3" /> WhatsApp
-            </label>
-            <input
-              type="tel"
-              value={form.contact.whatsapp}
-              onChange={(e) => update('contact', { ...form.contact, whatsapp: e.target.value })}
-              placeholder="+45 12345678"
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <Mail className="w-3 h-3" /> Email
-            </label>
-            <input
-              type="email"
-              value={form.contact.email}
-              onChange={(e) => update('contact', { ...form.contact, email: e.target.value })}
-              placeholder="email@company.com"
-              className="w-full bg-battle-dark border border-white/20 rounded-lg px-3 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs text-gray-400 mb-1">GameOwner *</label>
-          <input
-            type="text"
-            value={form.author}
-            onChange={(e) => update('author', e.target.value)}
-            placeholder="Contact person / responsible"
-            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange"
-            required
-          />
-        </div>
-      </section>
+      <CompanySelector
+        contact={form.contact}
+        author={form.author}
+        onChange={(contact) => update('contact', contact)}
+        onAuthorChange={(author) => update('author', author)}
+      />
 
       {error && <div className="text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3">{error}</div>}
 
