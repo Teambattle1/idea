@@ -124,9 +124,9 @@ const ActivityDetailPage = () => {
       <div className="min-h-screen bg-battle-black">
         <Header />
         <div className="text-center py-20">
-          <p className="text-gray-500 text-lg mb-4">Idé ikke fundet</p>
+          <p className="text-gray-500 text-lg mb-4">Idea not found</p>
           <Link to="/" className="text-battle-orange hover:underline">
-            Tilbage til oversigten
+            Back to overview
           </Link>
         </div>
       </div>
@@ -147,7 +147,7 @@ const ActivityDetailPage = () => {
             className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
-            Alle idéer
+            All ideas
           </Link>
           <div className="flex items-center gap-2">
             <LanguageSelector
@@ -161,7 +161,7 @@ const ActivityDetailPage = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-gray-300 hover:text-white rounded-lg text-sm transition-colors"
             >
               <Pencil className="w-4 h-4" />
-              Rediger
+              Edit
             </Link>
             {confirmDelete ? (
               <div className="flex items-center gap-2">
@@ -169,13 +169,13 @@ const ActivityDetailPage = () => {
                   onClick={handleDelete}
                   className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm transition-colors"
                 >
-                  Bekræft slet
+                  Confirm delete
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
                   className="px-3 py-1.5 bg-white/10 text-gray-300 rounded-lg text-sm"
                 >
-                  Annuller
+                  Cancel
                 </button>
               </div>
             ) : (
@@ -216,7 +216,7 @@ const ActivityDetailPage = () => {
           {activity.groupSize && (
             <span className="flex items-center gap-1.5 bg-battle-grey px-3 py-1.5 rounded-lg">
               <Users className="w-4 h-4" />
-              {activity.groupSize} personer
+              {activity.groupSize} people
             </span>
           )}
           <span className="flex items-center gap-1.5 bg-battle-grey px-3 py-1.5 rounded-lg">
@@ -235,8 +235,8 @@ const ActivityDetailPage = () => {
             {DIFFICULTY_LABELS[activity.difficulty]}
           </span>
           <span className="text-xs text-gray-600">
-            af {activity.author} ·{' '}
-            {new Date(activity.createdAt).toLocaleDateString('da-DK', {
+            by {activity.author} ·{' '}
+            {new Date(activity.createdAt).toLocaleDateString('en-GB', {
               day: '2-digit',
               month: 'short',
               year: 'numeric',
@@ -265,7 +265,7 @@ const ActivityDetailPage = () => {
           <div className="mb-6">
             <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
               <Video className="w-4 h-4" />
-              Videoklip
+              Video clip
             </div>
             <video
               src={activity.videoUrl}
@@ -286,7 +286,7 @@ const ActivityDetailPage = () => {
         {/* Long description */}
         {displayLong && (
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
-            <h2 className="text-white font-semibold mb-3">Beskrivelse</h2>
+            <h2 className="text-white font-semibold mb-3">Description</h2>
             <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
               {displayLong}
             </div>
@@ -296,7 +296,7 @@ const ActivityDetailPage = () => {
         {/* Execution */}
         {displayExecution && (
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
-            <h2 className="text-white font-semibold mb-3">Eksekvering</h2>
+            <h2 className="text-white font-semibold mb-3">Execution</h2>
             <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
               {displayExecution}
             </div>
@@ -308,7 +308,7 @@ const ActivityDetailPage = () => {
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
             <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
               <Download className="w-4 h-4 text-emerald-400" />
-              Materialer
+              Materials
             </h2>
             <div className="space-y-2">
               {uploadedFiles.map((mat: MaterialFile, i: number) => {
@@ -339,7 +339,7 @@ const ActivityDetailPage = () => {
         {/* Links */}
         {activity.links.length > 0 && (
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
-            <h2 className="text-white font-semibold mb-3">Links & Ressourcer</h2>
+            <h2 className="text-white font-semibold mb-3">Links & Resources</h2>
             <div className="space-y-2">
               {activity.links.map((link, i) => (
                 <a
@@ -361,7 +361,7 @@ const ActivityDetailPage = () => {
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
             <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
               <DollarSign className="w-4 h-4 text-yellow-400" />
-              Omkostninger
+              Costs
             </h2>
             <div className="space-y-2">
               {activity.costs.map((cost, i) => (
@@ -382,7 +382,7 @@ const ActivityDetailPage = () => {
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
             <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
               <Building2 className="w-4 h-4 text-blue-400" />
-              Kontakt
+              Contact
             </h2>
             <div className="space-y-2 text-sm">
               {activity.contact.company && (

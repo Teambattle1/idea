@@ -100,7 +100,7 @@ const HomePage = () => {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Søg i alle felter (titel, beskrivelse, tags, materialer, forfatter...)"
+                placeholder="Search all fields (title, description, tags, materials, author...)"
                 className="w-full bg-battle-grey border border-white/10 rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm"
               />
             </div>
@@ -126,35 +126,35 @@ const HomePage = () => {
             <div className="bg-battle-grey rounded-xl p-4 border border-white/10 space-y-4">
               <div className="flex flex-wrap gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Lokation</label>
+                  <label className="block text-xs text-gray-500 mb-1">Location</label>
                   <select
                     value={locationFilter}
                     onChange={(e) => setLocationFilter(e.target.value)}
                     className="bg-battle-dark border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-battle-orange"
                   >
-                    <option value="">Alle</option>
-                    <option value="indendørs">Indendørs</option>
-                    <option value="udendørs">Udendørs</option>
-                    <option value="begge">Begge dele</option>
+                    <option value="">All</option>
+                    <option value="indendørs">Indoor</option>
+                    <option value="udendørs">Outdoor</option>
+                    <option value="begge">Both</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 mb-1">Sværhedsgrad</label>
+                  <label className="block text-xs text-gray-500 mb-1">Difficulty</label>
                   <select
                     value={difficultyFilter}
                     onChange={(e) => setDifficultyFilter(e.target.value)}
                     className="bg-battle-dark border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-battle-orange"
                   >
-                    <option value="">Alle</option>
-                    <option value="let">Let</option>
+                    <option value="">All</option>
+                    <option value="let">Easy</option>
                     <option value="medium">Medium</option>
-                    <option value="svær">Svær</option>
+                    <option value="svær">Hard</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1 flex items-center gap-1">
                     <Clock className="w-3 h-3" />
-                    Varighed
+                    Duration
                   </label>
                   <select
                     value={durationFilter}
@@ -192,7 +192,7 @@ const HomePage = () => {
                   }}
                   className="text-xs text-gray-400 hover:text-white transition-colors"
                 >
-                  Ryd alle filtre
+                  Clear all filters
                 </button>
               )}
             </div>
@@ -208,14 +208,14 @@ const HomePage = () => {
           <div className="text-center py-20">
             <p className="text-gray-500 text-lg">
               {activities.length === 0
-                ? 'Ingen idéer endnu — opret den første!'
-                : 'Ingen idéer matcher dine filtre'}
+                ? 'No ideas yet — create the first one!'
+                : 'No ideas match your filters'}
             </p>
           </div>
         ) : (
           <>
             <p className="text-xs text-gray-500 mb-4">
-              {filtered.length} idé{filtered.length !== 1 ? 'er' : ''}
+              {filtered.length} idea{filtered.length !== 1 ? 's' : ''}
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((activity) => (

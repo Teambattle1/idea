@@ -143,7 +143,7 @@ function rowToActivity(row: TodoRow): Activity {
     groupSize: data.groupSize || '',
     difficulty: data.difficulty || 'medium',
     location: data.location || 'begge',
-    author: data.author || 'Ukendt',
+    author: data.author || 'Unknown',
     createdAt: row.created_at,
     archived: row.resolved,
   };
@@ -189,7 +189,7 @@ export async function createActivity(
     if (error) return { success: false, error: error.message };
     return { success: true };
   } catch {
-    return { success: false, error: 'Uventet fejl' };
+    return { success: false, error: 'Unexpected error' };
   }
 }
 
@@ -206,7 +206,7 @@ export async function updateActivity(
     if (error) return { success: false, error: error.message };
     return { success: true };
   } catch {
-    return { success: false, error: 'Uventet fejl' };
+    return { success: false, error: 'Unexpected error' };
   }
 }
 

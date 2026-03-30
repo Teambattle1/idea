@@ -9,7 +9,7 @@ const Header = () => {
           <Link to="/" className="flex items-center gap-2">
             <Lightbulb className="w-7 h-7 text-yellow-400" />
             <h1 className="text-xl font-bold text-white">
-              IDEAS <span className="text-sm font-normal text-gray-400">Teambuilding Idebank</span>
+              IDEAS <span className="text-sm font-normal text-gray-400">Team Building Idea Bank</span>
             </h1>
           </Link>
           <Link
@@ -17,7 +17,7 @@ const Header = () => {
             className="px-4 py-2 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
-            Ny idé
+            New Idea
           </Link>
         </div>
       </div>

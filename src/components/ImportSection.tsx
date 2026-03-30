@@ -22,7 +22,7 @@ const ImportSection = ({
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith('.pdf')) {
-      setError('Kun PDF-filer understøttes til import');
+      setError('Only PDF files are supported for import');
       return;
     }
 
@@ -33,7 +33,7 @@ const ImportSection = ({
     try {
       const text = await extractTextFromPdf(file);
       if (!text.trim()) {
-        setError('Kunne ikke læse tekst fra PDF. Prøv en anden fil.');
+        setError('Could not read text from PDF. Try another file.');
         setIsProcessing(false);
         return;
       }
@@ -42,17 +42,17 @@ const ImportSection = ({
       onImport(extracted);
 
       const fields: string[] = [];
-      if (extracted.title) fields.push('titel');
-      if (extracted.duration) fields.push('varighed');
-      if (extracted.groupSize) fields.push('gruppestørrelse');
-      if (extracted.location) fields.push('lokation');
+      if (extracted.title) fields.push('title');
+      if (extracted.duration) fields.push('duration');
+      if (extracted.groupSize) fields.push('group size');
+      if (extracted.location) fields.push('location');
       if (extracted.tags && extracted.tags.length > 0) fields.push(`${extracted.tags.length} tags`);
-      if (extracted.shortDescription) fields.push('beskrivelse');
+      if (extracted.shortDescription) fields.push('description');
 
-      setSuccess(`Importeret: ${fields.join(', ')}`);
+      setSuccess(`Imported: ${fields.join(', ')}`);
     } catch (err: any) {
       console.error('PDF import error:', err);
-      setError('Fejl ved læsning af PDF: ' + (err.message || 'Ukendt fejl'));
+      setError('Error reading PDF: ' + (err.message || 'Unknown error'));
     }
 
     setIsProcessing(false);
@@ -83,17 +83,17 @@ const ImportSection = ({
       onImport(extracted);
 
       const fields: string[] = [];
-      if (extracted.title) fields.push('titel');
-      if (extracted.duration) fields.push('varighed');
-      if (extracted.groupSize) fields.push('gruppestørrelse');
-      if (extracted.location) fields.push('lokation');
-      if (extracted.images && extracted.images.length > 0) fields.push(`${extracted.images.length} billeder`);
+      if (extracted.title) fields.push('title');
+      if (extracted.duration) fields.push('duration');
+      if (extracted.groupSize) fields.push('group size');
+      if (extracted.location) fields.push('location');
+      if (extracted.images && extracted.images.length > 0) fields.push(`${extracted.images.length} images`);
       if (extracted.tags && extracted.tags.length > 0) fields.push(`${extracted.tags.length} tags`);
 
-      setSuccess(`Importeret: ${fields.join(', ')}`);
+      setSuccess(`Imported: ${fields.join(', ')}`);
     } catch (err: any) {
       console.error('URL import error:', err);
-      setError('Kunne ikke hente URL: ' + (err.message || 'Ukendt fejl'));
+      setError('Could not fetch URL: ' + (err.message || 'Unknown error'));
     }
 
     setIsProcessing(false);
@@ -106,7 +106,7 @@ const ImportSection = ({
         Smart Import
       </h3>
       <p className="text-xs text-gray-400">
-        Upload en PDF eller angiv en URL — vi udtrækker automatisk titel, varighed, gruppestørrelse, lokation og tags.
+        Upload a PDF or enter a URL — we automatically extract title, duration, group size, location and tags.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -131,12 +131,12 @@ const ImportSection = ({
             {isProcessing ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin" />
-                Analyserer...
+                Analyzing...
               </>
             ) : (
               <>
                 <FileUp className="w-5 h-5" />
-                Import fra PDF
+                Import from PDF
               </>
             )}
           </label>
@@ -149,7 +149,7 @@ const ImportSection = ({
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleUrlImport())}
-            placeholder="https://eksempel.dk/aktivitet"
+            placeholder="https://example.com/activity"
             disabled={isProcessing}
             className="flex-1 bg-battle-dark border border-white/20 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange text-sm disabled:opacity-50"
           />
@@ -160,7 +160,7 @@ const ImportSection = ({
             className="px-3 py-2 bg-battle-orange/20 hover:bg-battle-orange/30 text-battle-orange rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center gap-1.5"
           >
             <Globe className="w-4 h-4" />
-            Hent
+            Fetch
           </button>
         </div>
       </div>
