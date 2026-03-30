@@ -18,13 +18,17 @@ import {
 import Header from '../components/Header';
 import { extractActivityFromHtml } from '../lib/contentExtractor';
 import { createActivity } from '../lib/supabase';
-import { Activity, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+import { translateText } from '../lib/translator';
+import { detectLanguage } from '../lib/langDetect';
+import { Activity, OriginalText, DIFFICULTY_LABELS, LOCATION_LABELS, COUNTRIES } from '../types';
 
 type PartialActivity = Partial<Omit<Activity, 'id' | 'createdAt' | 'archived'>>;
 
 interface ScrapedItem {
   url: string;
   data: PartialActivity;
+  originalLang: string;
+  originalData: { title: string; shortDescription: string; longDescription: string; execution: string } | null;
   status: 'pending' | 'accepted' | 'declined';
 }
 
@@ -66,25 +70,69 @@ const ScrapePage = () => {
 
       setScanProgress(`Found ${subPages.length} sub-pages. Extracting activities...`);
 
+      // Detect language from URL
+      const detectedLang = detectLanguage(targetUrl, '');
+      const needsTranslation = detectedLang !== 'en';
+
       // Extract activities from all pages
       const scraped: ScrapedItem[] = [];
 
+      // Helper: extract and optionally translate
+      const processPage = async (pageUrl: string, pageHtml: string) => {
+        const pageData = extractActivityFromHtml(pageHtml, pageUrl);
+        if (!pageData.title || pageData.title.length <= 3) return null;
+
+        // Refine language detection with actual text
+        const pageLang = needsTranslation ? detectedLang : detectLanguage(pageUrl, pageData.longDescription || pageData.shortDescription || '');
+        const shouldTranslate = pageLang !== 'en';
+
+        let originalData = null;
+        if (shouldTranslate) {
+          // Store original text
+          originalData = {
+            title: pageData.title || '',
+            shortDescription: pageData.shortDescription || '',
+            longDescription: pageData.longDescription || '',
+            execution: pageData.execution || '',
+          };
+
+          // Translate to English
+          try {
+            if (pageData.title) {
+              pageData.title = await translateText(pageData.title, pageLang, 'en');
+            }
+            if (pageData.shortDescription) {
+              pageData.shortDescription = await translateText(pageData.shortDescription, pageLang, 'en');
+            }
+            if (pageData.longDescription) {
+              pageData.longDescription = await translateText(pageData.longDescription, pageLang, 'en');
+            }
+          } catch {
+            // Keep original if translation fails
+          }
+        }
+
+        return { url: pageUrl, data: pageData, originalLang: pageLang, originalData, status: 'pending' as const };
+      };
+
       // Process main page
-      const mainData = extractActivityFromHtml(mainPage.html, mainPage.url);
-      if (mainData.title) {
-        scraped.push({ url: mainPage.url, data: mainData, status: 'pending' });
-      }
+      setScanProgress('Processing main page...');
+      const mainResult = await processPage(mainPage.url, mainPage.html);
+      if (mainResult) scraped.push(mainResult);
 
       // Process sub-pages
-      for (const page of subPages) {
-        const pageData = extractActivityFromHtml(page.html, page.url);
-        if (pageData.title && pageData.title.length > 3) {
+      for (let i = 0; i < subPages.length; i++) {
+        const page = subPages[i];
+        setScanProgress(`Processing page ${i + 1}/${subPages.length}${needsTranslation ? ' (translating)' : ''}...`);
+
+        const result = await processPage(page.url, page.html);
+        if (result) {
           // Avoid duplicates by title
           const isDupe = scraped.some(
-            (s) => s.data.title?.toLowerCase() === pageData.title?.toLowerCase()
+            (s) => s.data.title?.toLowerCase() === result.data.title?.toLowerCase()
           );
           if (!isDupe) {
-            scraped.push({ url: page.url, data: pageData, status: 'pending' });
+            scraped.push(result);
           }
         }
       }
@@ -149,11 +197,20 @@ const ScrapePage = () => {
     setSavedCount(0);
 
     for (const item of accepted) {
+      const originalText: OriginalText | null = item.originalData ? {
+        lang: item.originalLang,
+        title: item.originalData.title,
+        shortDescription: item.originalData.shortDescription,
+        longDescription: item.originalData.longDescription,
+        execution: item.originalData.execution,
+      } : null;
+
       const activity: Omit<Activity, 'id' | 'createdAt' | 'archived'> = {
         title: item.data.title || 'Untitled',
         shortDescription: item.data.shortDescription || '',
         longDescription: item.data.longDescription || '',
         execution: item.data.execution || '',
+        originalText,
         images: item.data.images || [],
         links: [{ label: 'Source', url: item.url }],
         materials: [],
@@ -288,8 +345,13 @@ const ScrapePage = () => {
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-1">
+                  <h3 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
                     {currentItem.data.title || 'Untitled'}
+                    {currentItem.originalLang !== 'en' && (
+                      <span className="text-xs bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full font-normal">
+                        {COUNTRIES[currentItem.originalLang.toUpperCase()]?.flag || '🌐'} → 🇬🇧
+                      </span>
+                    )}
                   </h3>
                   <a
                     href={currentItem.url}

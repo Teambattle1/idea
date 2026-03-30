@@ -49,12 +49,21 @@ export const COUNTRIES: Record<string, { label: string; flag: string }> = {
   IT: { label: 'Italy', flag: '🇮🇹' },
 };
 
+export interface OriginalText {
+  lang: string; // ISO 639-1 code e.g. 'da', 'de', 'pt'
+  title: string;
+  shortDescription: string;
+  longDescription: string;
+  execution: string;
+}
+
 export interface Activity {
   id: string;
   title: string;
   shortDescription: string;
   longDescription: string;
   execution: string;
+  originalText: OriginalText | null;
   images: string[];
   links: ActivityLink[];
   materials: MaterialFile[];
