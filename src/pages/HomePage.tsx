@@ -15,7 +15,7 @@ const HomePage = () => {
   const [locationFilter, setLocationFilter] = useState<string>('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('');
   const [durationFilter, setDurationFilter] = useState<number>(0); // index into DURATION_RANGES
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResults, setScanResults] = useState<ScanResult[] | null>(null);
 
