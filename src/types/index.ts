@@ -13,18 +13,22 @@ export interface CostItem {
 export interface ContactInfo {
   company: string;
   country: string;
+  website: string;
   phone: string;
   whatsapp: string;
   email: string;
+  notes: string;
 }
 
 export interface CompanyProfile {
   id: string;
   company: string;
   country: string;
+  website: string;
   phone: string;
   whatsapp: string;
   email: string;
+  notes: string;
   gameOwner: string;
   createdAt: string;
 }
@@ -63,6 +67,9 @@ export interface Activity {
   shortDescription: string;
   longDescription: string;
   execution: string;
+  activityNotes: string;
+  production: string;
+  pricing: string;
   originalText: OriginalText | null;
   images: string[];
   links: ActivityLink[];

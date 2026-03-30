@@ -332,6 +332,40 @@ const ActivityDetailPage = () => {
           </div>
         )}
 
+        {/* Notes */}
+        {activity.activityNotes && (
+          <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
+            <h2 className="text-white font-semibold mb-3">Notes</h2>
+            <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">
+              {activity.activityNotes}
+            </div>
+          </div>
+        )}
+
+        {/* Production & Pricing */}
+        {(activity.production || activity.pricing) && (
+          <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
+            <h2 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+              Production & Pricing
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {activity.production && (
+                <div>
+                  <h3 className="text-xs text-gray-500 uppercase mb-1">Production</h3>
+                  <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{activity.production}</div>
+                </div>
+              )}
+              {activity.pricing && (
+                <div>
+                  <h3 className="text-xs text-gray-500 uppercase mb-1">Pricing</h3>
+                  <div className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap">{activity.pricing}</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Materials / Files */}
         {uploadedFiles.length > 0 && (
           <div className="bg-battle-grey rounded-xl p-6 border border-white/10 mb-6">
@@ -436,7 +470,16 @@ const ActivityDetailPage = () => {
                     {activity.contact.email}
                   </a>
                 )}
+                {activity.contact.website && (
+                  <a href={activity.contact.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-battle-orange hover:text-battle-orangeLight transition-colors">
+                    <ExternalLink className="w-4 h-4" />
+                    Website
+                  </a>
+                )}
               </div>
+              {activity.contact.notes && (
+                <p className="text-xs text-gray-500 mt-2">{activity.contact.notes}</p>
+              )}
             </div>
           </div>
         )}

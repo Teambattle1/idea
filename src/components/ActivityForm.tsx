@@ -26,12 +26,15 @@ const emptyForm: FormData = {
   shortDescription: '',
   longDescription: '',
   execution: '',
+  activityNotes: '',
+  production: '',
+  pricing: '',
   originalText: null,
   images: [],
   links: [],
   materials: [],
   costs: [],
-  contact: { company: '', country: '', phone: '', whatsapp: '', email: '' },
+  contact: { company: '', country: '', website: '', phone: '', whatsapp: '', email: '', notes: '' },
   youtubeUrl: '',
   videoUrl: '',
   tags: [],
@@ -274,6 +277,17 @@ const ActivityForm = ({
             placeholder="How is the activity run? Step-by-step, setup, flow etc."
             className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
             rows={6}
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Notes</label>
+          <textarea
+            value={form.activityNotes}
+            onChange={(e) => update('activityNotes', e.target.value)}
+            placeholder="Internal notes, ideas, reminders..."
+            className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none"
+            rows={3}
           />
         </div>
 
@@ -625,6 +639,36 @@ const ActivityForm = ({
           >
             <Plus className="w-4 h-4" />
           </button>
+        </div>
+      </section>
+
+      {/* Production & Pricing */}
+      <section className="bg-battle-grey rounded-xl p-6 border border-white/10 space-y-4">
+        <h3 className="text-white font-semibold text-sm uppercase tracking-wider flex items-center gap-2">
+          <DollarSign className="w-4 h-4 text-emerald-400" />
+          Production & Pricing
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Production</label>
+            <textarea
+              value={form.production}
+              onChange={(e) => update('production', e.target.value)}
+              placeholder="Production costs, supplier info, materials needed..."
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none text-sm"
+              rows={4}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Pricing</label>
+            <textarea
+              value={form.pricing}
+              onChange={(e) => update('pricing', e.target.value)}
+              placeholder="Pricing model, rates, packages..."
+              className="w-full bg-battle-dark border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-battle-orange resize-none text-sm"
+              rows={4}
+            />
+          </div>
         </div>
       </section>
 
