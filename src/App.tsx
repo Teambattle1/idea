@@ -4,6 +4,7 @@ import ActivityDetailPage from './pages/ActivityDetailPage';
 import CreateActivityPage from './pages/CreateActivityPage';
 import EditActivityPage from './pages/EditActivityPage';
 import ScrapePage from './pages/ScrapePage';
+import InspirationPage from './pages/InspirationPage';
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Route path="/activity/:id" element={<ActivityDetailPage />} />
         <Route path="/create" element={<CreateActivityPage />} />
         <Route path="/scrape" element={<ScrapePage />} />
+        <Route path="/inspiration" element={<InspirationPage />} />
         <Route path="/edit/:id" element={<EditActivityPage />} />
       </Routes>
     </BrowserRouter>
