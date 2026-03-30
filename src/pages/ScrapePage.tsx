@@ -37,6 +37,9 @@ const ScrapePage = () => {
   const [url, setUrl] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState('');
+  const [scanStep, setScanStep] = useState(0); // 0=idle, 1=fetching, 2=extracting, 3=translating
+  const [scanTotal, setScanTotal] = useState(0);
+  const [scanCurrent, setScanCurrent] = useState(0);
   const [items, setItems] = useState<ScrapedItem[]>([]);
   const [wizardIndex, setWizardIndex] = useState(-1); // -1 = scan phase, >= 0 = wizard
   const [isSaving, setIsSaving] = useState(false);
@@ -52,7 +55,10 @@ const ScrapePage = () => {
     setIsScanning(true);
     setError(null);
     setItems([]);
-    setScanProgress('Fetching site and finding sub-pages...');
+    setScanStep(1);
+    setScanCurrent(0);
+    setScanTotal(0);
+    setScanProgress('Connecting to site...');
 
     try {
       const response = await fetch('/api/scrape-site', {
@@ -68,6 +74,9 @@ const ScrapePage = () => {
 
       const { mainPage, subPages } = await response.json();
 
+      setScanStep(2);
+      setScanTotal(subPages.length + 1);
+      setScanCurrent(0);
       setScanProgress(`Found ${subPages.length} sub-pages. Extracting activities...`);
 
       // Detect language from URL
@@ -116,13 +125,16 @@ const ScrapePage = () => {
       };
 
       // Process main page
+      setScanCurrent(1);
       setScanProgress('Processing main page...');
       const mainResult = await processPage(mainPage.url, mainPage.html);
       if (mainResult) scraped.push(mainResult);
 
       // Process sub-pages
+      if (needsTranslation) setScanStep(3);
       for (let i = 0; i < subPages.length; i++) {
         const page = subPages[i];
+        setScanCurrent(i + 2);
         setScanProgress(`Processing page ${i + 1}/${subPages.length}${needsTranslation ? ' (translating)' : ''}...`);
 
         const result = await processPage(page.url, page.html);
@@ -292,10 +304,59 @@ const ScrapePage = () => {
               </button>
             </div>
 
-            {scanProgress && (
-              <div className="flex items-center gap-2 text-sm text-battle-orange">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {scanProgress}
+            {isScanning && (
+              <div className="bg-battle-grey rounded-xl p-5 border border-white/10 space-y-3">
+                {/* Step indicators */}
+                <div className="flex items-center gap-2">
+                  {[
+                    { step: 1, label: 'Fetching' },
+                    { step: 2, label: 'Extracting' },
+                    { step: 3, label: 'Translating' },
+                  ].map(({ step, label }) => (
+                    <div key={step} className="flex items-center gap-1.5">
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                          scanStep > step
+                            ? 'bg-green-500 text-white'
+                            : scanStep === step
+                              ? 'bg-battle-orange text-white animate-pulse'
+                              : 'bg-battle-dark text-gray-500'
+                        }`}
+                      >
+                        {scanStep > step ? '✓' : step}
+                      </div>
+                      <span className={`text-xs ${scanStep >= step ? 'text-white' : 'text-gray-600'}`}>
+                        {label}
+                      </span>
+                      {step < 3 && (
+                        <div className={`w-8 h-0.5 ${scanStep > step ? 'bg-green-500' : 'bg-battle-dark'}`} />
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Progress bar */}
+                {scanTotal > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                      <span>{scanProgress}</span>
+                      <span>{scanCurrent}/{scanTotal}</span>
+                    </div>
+                    <div className="w-full bg-battle-dark rounded-full h-2">
+                      <div
+                        className="bg-battle-orange h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min((scanCurrent / scanTotal) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {scanTotal === 0 && scanProgress && (
+                  <div className="flex items-center gap-2 text-sm text-battle-orange">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {scanProgress}
+                  </div>
+                )}
               </div>
             )}
 
