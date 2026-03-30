@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Activity, MaterialFile } from '../types';
+import { Activity, CompanyProfile, MaterialFile } from '../types';
 
 const supabaseUrl = 'https://ilbjytyukicbssqftmma.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYmp5dHl1a2ljYnNzcWZ0bW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MzA0NjEsImV4cCI6MjA3MDQwNjQ2MX0.I_PWByMPcOYhWgeq9MxXgOo-NCZYfEuzYmo35XnBFAY';
@@ -220,6 +220,97 @@ export async function deleteActivity(id: string): Promise<{ success: boolean }> 
       }
     }
 
+    const { error } = await supabase.from('todos').delete().eq('id', id);
+    return { success: !error };
+  } catch {
+    return { success: false };
+  }
+}
+
+// --- Company Profiles ---
+
+function companyToRow(company: Omit<CompanyProfile, 'id' | 'createdAt'>) {
+  const payload = {
+    country: company.country,
+    phone: company.phone,
+    whatsapp: company.whatsapp,
+    email: company.email,
+    gameOwner: company.gameOwner,
+  };
+  return {
+    title: company.company,
+    description: JSON.stringify(payload),
+    assigned_to: IDEA_EMPLOYEE_ID,
+    priority: 'Normal',
+    category: 'idea-company',
+    resolved: false,
+    is_error: false,
+  };
+}
+
+function rowToCompany(row: TodoRow): CompanyProfile {
+  let data: any = {};
+  try {
+    data = JSON.parse(row.description || '{}');
+  } catch {
+    data = {};
+  }
+  return {
+    id: row.id,
+    company: row.title,
+    country: data.country || '',
+    phone: data.phone || '',
+    whatsapp: data.whatsapp || '',
+    email: data.email || '',
+    gameOwner: data.gameOwner || '',
+    createdAt: row.created_at,
+  };
+}
+
+export async function fetchCompanies(): Promise<CompanyProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('category', 'idea-company')
+      .order('title', { ascending: true });
+
+    if (error || !data) return [];
+    return (data as TodoRow[]).map(rowToCompany);
+  } catch {
+    return [];
+  }
+}
+
+export async function createCompany(
+  company: Omit<CompanyProfile, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const row = companyToRow(company);
+    const { error } = await supabase.from('todos').insert(row);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function updateCompany(
+  id: string,
+  company: Omit<CompanyProfile, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const row = companyToRow(company);
+    const { error } = await supabase.from('todos').update(row).eq('id', id);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function deleteCompany(id: string): Promise<{ success: boolean }> {
+  try {
     const { error } = await supabase.from('todos').delete().eq('id', id);
     return { success: !error };
   } catch {
