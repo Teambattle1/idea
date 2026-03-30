@@ -30,16 +30,36 @@ const handler: Handler = async (event) => {
       'Cache-Control': 'no-cache',
     };
 
-    const response = await fetch(url, {
-      headers: fetchHeaders,
-      redirect: 'follow',
-    });
+    // Try fetching with timeout, retry once on failure
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        headers: fetchHeaders,
+        redirect: 'follow',
+        signal: AbortSignal.timeout(15000),
+      });
+    } catch (fetchErr: any) {
+      // Retry once
+      try {
+        response = await fetch(url, {
+          headers: fetchHeaders,
+          redirect: 'follow',
+          signal: AbortSignal.timeout(15000),
+        });
+      } catch {
+        return {
+          statusCode: 502,
+          headers,
+          body: JSON.stringify({ error: `Could not connect to site: ${fetchErr.message}` }),
+        };
+      }
+    }
 
-    if (!response.ok) {
+    if (!response!.ok) {
       return {
         statusCode: 502,
         headers,
-        body: JSON.stringify({ error: `Failed to fetch: ${response.status}` }),
+        body: JSON.stringify({ error: `Site returned HTTP ${response!.status}` }),
       };
     }
 
