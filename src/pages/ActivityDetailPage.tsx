@@ -62,6 +62,7 @@ const ActivityDetailPage = () => {
   const [currentLang, setCurrentLang] = useState('da');
   const [isTranslating, setIsTranslating] = useState(false);
   const [translated, setTranslated] = useState<TranslatedActivity | null>(null);
+  const [showOriginal, setShowOriginal] = useState(false);
 
   useEffect(() => {
     if (id) loadActivity(id);
@@ -104,11 +105,12 @@ const ActivityDetailPage = () => {
     setIsTranslating(false);
   }, [activity]);
 
-  // Use translated or original content
-  const displayTitle = translated?.title || activity?.title || '';
-  const displayShort = translated?.shortDescription || activity?.shortDescription || '';
-  const displayLong = translated?.longDescription || activity?.longDescription || '';
-  const displayExecution = translated?.execution || activity?.execution || '';
+  // Use translated, original, or default content
+  const orig = activity?.originalText;
+  const displayTitle = showOriginal && orig?.title ? orig.title : (translated?.title || activity?.title || '');
+  const displayShort = showOriginal && orig?.shortDescription ? orig.shortDescription : (translated?.shortDescription || activity?.shortDescription || '');
+  const displayLong = showOriginal && orig?.longDescription ? orig.longDescription : (translated?.longDescription || activity?.longDescription || '');
+  const displayExecution = showOriginal && orig?.execution ? orig.execution : (translated?.execution || activity?.execution || '');
 
   if (isLoading) {
     return (
@@ -152,6 +154,23 @@ const ActivityDetailPage = () => {
             All ideas
           </Link>
           <div className="flex items-center gap-2">
+            {/* Original language toggle */}
+            {activity.originalText && (
+              <button
+                onClick={() => setShowOriginal(!showOriginal)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors border ${
+                  showOriginal
+                    ? 'bg-blue-500/20 border-blue-500/50 text-blue-400'
+                    : 'bg-white/10 border-white/10 text-gray-300 hover:text-white'
+                }`}
+                title={showOriginal ? 'Showing original text' : 'Show original language'}
+              >
+                <span>{countryFlag(activity.originalText.lang.toUpperCase()) || '🌐'}</span>
+                <span className="hidden sm:inline text-xs">
+                  {showOriginal ? 'Original' : 'Original'}
+                </span>
+              </button>
+            )}
             <LanguageSelector
               current={currentLang}
               onChange={handleLanguageChange}

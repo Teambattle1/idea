@@ -42,7 +42,7 @@ const handler: Handler = async (event) => {
     const html = await response.text();
     const baseUrl = new URL(url);
 
-    // Find all internal links
+    // Find all internal links - be thorough: look in nav, main, product listings etc.
     const linkRegex = /<a[^>]+href=["']([^"'#]+)["'][^>]*>/gi;
     const links = new Set<string>();
     let match;
@@ -54,10 +54,13 @@ const handler: Handler = async (event) => {
       else if (href.startsWith('/')) href = baseUrl.origin + href;
       else if (!href.startsWith('http')) href = baseUrl.origin + '/' + href;
 
-      // Only include links from the same domain
       try {
         const linkUrl = new URL(href);
         if (linkUrl.hostname === baseUrl.hostname) {
+          // Skip common non-content pages
+          const path = linkUrl.pathname.toLowerCase();
+          if (path.match(/\/(cart|checkout|login|register|account|wp-admin|feed|xmlrpc|wp-json)\b/)) continue;
+          if (path.match(/\.(css|js|xml|json|png|jpg|gif|svg|ico|woff|ttf)$/)) continue;
           links.add(linkUrl.href);
         }
       } catch {
@@ -65,30 +68,37 @@ const handler: Handler = async (event) => {
       }
     }
 
-    // Fetch each sub-page (limit to 20 to avoid abuse)
+    // Fetch each sub-page (limit to 50 for better coverage)
     const subPages: Array<{ url: string; html: string }> = [];
-    const pagesToFetch = Array.from(links).slice(0, 20);
+    const pagesToFetch = Array.from(links).slice(0, 50);
 
-    await Promise.all(
-      pagesToFetch.map(async (pageUrl) => {
-        try {
+    // Fetch in batches of 10 for speed
+    for (let i = 0; i < pagesToFetch.length; i += 10) {
+      const batch = pagesToFetch.slice(i, i + 10);
+      const results = await Promise.allSettled(
+        batch.map(async (pageUrl) => {
           const pageResponse = await fetch(pageUrl, {
             headers: {
               'User-Agent': 'Mozilla/5.0 (compatible; IDEAS Bot/1.0)',
               'Accept': 'text/html,*/*',
             },
             redirect: 'follow',
-            signal: AbortSignal.timeout(5000),
+            signal: AbortSignal.timeout(8000),
           });
           if (pageResponse.ok) {
             const pageHtml = await pageResponse.text();
-            subPages.push({ url: pageUrl, html: pageHtml });
+            return { url: pageUrl, html: pageHtml };
           }
-        } catch {
-          // Skip failed pages
+          return null;
+        })
+      );
+
+      for (const r of results) {
+        if (r.status === 'fulfilled' && r.value) {
+          subPages.push(r.value);
         }
-      })
-    );
+      }
+    }
 
     return {
       statusCode: 200,

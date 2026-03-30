@@ -26,6 +26,7 @@ const emptyForm: FormData = {
   shortDescription: '',
   longDescription: '',
   execution: '',
+  originalText: null,
   images: [],
   links: [],
   materials: [],
