@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Loader2, SlidersHorizontal, Clock } from 'lucide-react';
+import { Search, Loader2, SlidersHorizontal, Clock, Video } from 'lucide-react';
 import { fetchActivities } from '../lib/supabase';
+import { scanAndUpdateVideoUrls, ScanResult } from '../lib/videoScanner';
 import { Activity, SUGGESTED_TAGS, DURATION_RANGES } from '../types';
 import Header from '../components/Header';
 import ActivityCard from '../components/ActivityCard';
@@ -15,6 +16,8 @@ const HomePage = () => {
   const [difficultyFilter, setDifficultyFilter] = useState<string>('');
   const [durationFilter, setDurationFilter] = useState<number>(0); // index into DURATION_RANGES
   const [showFilters, setShowFilters] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResults, setScanResults] = useState<ScanResult[] | null>(null);
 
   useEffect(() => {
     loadActivities();
@@ -25,6 +28,16 @@ const HomePage = () => {
     const data = await fetchActivities();
     setActivities(data.filter((a) => !a.archived));
     setIsLoading(false);
+  };
+
+  const handleVideoScan = async () => {
+    setIsScanning(true);
+    const results = await scanAndUpdateVideoUrls();
+    setScanResults(results);
+    setIsScanning(false);
+    if (results.some((r) => r.updated)) {
+      await loadActivities();
+    }
   };
 
   const toggleTag = (tag: string) => {
@@ -120,7 +133,47 @@ const HomePage = () => {
                 </span>
               )}
             </button>
+            <button
+              onClick={handleVideoScan}
+              disabled={isScanning}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border bg-battle-grey border-white/10 text-gray-400 hover:text-white hover:border-red-500/30 disabled:opacity-50"
+              title="Scan all ideas for video URLs"
+            >
+              {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+              Scan Videos
+            </button>
           </div>
+
+          {scanResults && (
+            <div className="bg-battle-grey rounded-lg p-3 border border-white/10 text-xs">
+              {scanResults.length === 0 ? (
+                <span className="text-gray-500">No new video URLs found in existing ideas.</span>
+              ) : (
+                <div className="space-y-1">
+                  <span className="text-green-400 font-medium">
+                    Found videos in {scanResults.length} idea{scanResults.length !== 1 ? 's' : ''}:
+                  </span>
+                  {scanResults.map((r) => (
+                    <div key={r.id} className="flex items-center gap-2 text-gray-400">
+                      <span className={r.updated ? 'text-green-400' : 'text-gray-500'}>
+                        {r.updated ? '✓' : '–'}
+                      </span>
+                      <span className="text-white">{r.title}</span>
+                      {r.foundYouTube && <span className="text-red-400">YouTube</span>}
+                      {r.foundVideo && <span className="text-blue-400">Video</span>}
+                      {!r.updated && <span className="text-gray-600">(already set)</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <button
+                onClick={() => setScanResults(null)}
+                className="mt-2 text-gray-500 hover:text-white"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
 
           {showFilters && (
             <div className="bg-battle-grey rounded-xl p-4 border border-white/10 space-y-4">

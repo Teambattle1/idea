@@ -1,30 +1,34 @@
 import { Link } from 'react-router-dom';
 import { Clock, Users, MapPin, Play, Image as ImageIcon, FileText } from 'lucide-react';
 import { Activity, COUNTRIES, DIFFICULTY_LABELS, LOCATION_LABELS } from '../types';
+import { getYouTubeThumbnail } from '../lib/videoUtils';
+import TagBadge from './TagBadge';
 
 function countryFlag(code: string): string {
-  // First try COUNTRIES map
   if (COUNTRIES[code]?.flag) return COUNTRIES[code].flag;
-  // Convert 2-letter code to flag emoji (e.g. "DK" -> 🇩🇰)
   const upper = code.toUpperCase();
   if (upper.length === 2) {
     return String.fromCodePoint(...[...upper].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
   }
   return '';
 }
-import TagBadge from './TagBadge';
 
 const ActivityCard = ({ activity }: { activity: Activity }) => {
-  const hasMedia = activity.youtubeUrl || activity.videoUrl || activity.images.length > 0;
   const fileCount = activity.materials.filter((m) => m.url).length;
+  const hasVideo = !!activity.youtubeUrl || !!activity.videoUrl;
+  const youtubeThumbnail = activity.youtubeUrl ? getYouTubeThumbnail(activity.youtubeUrl) : null;
+
+  // Determine card thumbnail: first image, or YouTube thumbnail
+  const thumbnail = activity.images.length > 0 ? activity.images[0] : youtubeThumbnail;
 
   return (
     <div className="bg-battle-grey rounded-xl border border-white/10 hover:border-battle-orange/30 transition-all group">
-      {activity.images.length > 0 && (
+      {/* Thumbnail: image or YouTube preview */}
+      {thumbnail && (
         <Link to={`/activity/${activity.id}`}>
           <div className="aspect-video rounded-t-xl overflow-hidden bg-battle-dark relative">
             <img
-              src={activity.images[0]}
+              src={thumbnail}
               alt={activity.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               onError={(e) => {
@@ -37,11 +41,12 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
                 {activity.images.length}
               </span>
             )}
-            {activity.youtubeUrl && (
-              <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                <Play className="w-3 h-3" />
-                Video
-              </span>
+            {hasVideo && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-14 h-14 rounded-full bg-red-600/90 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                  <Play className="w-6 h-6 text-white ml-1" fill="white" />
+                </div>
+              </div>
             )}
           </div>
         </Link>
@@ -95,7 +100,7 @@ const ActivityCard = ({ activity }: { activity: Activity }) => {
           >
             {DIFFICULTY_LABELS[activity.difficulty]}
           </span>
-          {!hasMedia && activity.youtubeUrl && (
+          {hasVideo && !thumbnail && (
             <span className="flex items-center gap-1 text-red-400">
               <Play className="w-3.5 h-3.5" />
               Video
