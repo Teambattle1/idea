@@ -3,6 +3,18 @@
   publish = "dist"
   functions = "netlify/functions"
 
+[functions]
+  node_bundler = "esbuild"
+
+[functions."scrape-site"]
+  timeout = 26
+
+[functions."translate"]
+  timeout = 26
+
+[functions."extract-url"]
+  timeout = 26
+
 [build.environment]
   NODE_VERSION = "18"
 
