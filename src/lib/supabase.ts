@@ -18,6 +18,15 @@ export interface IdeaTodo {
   category: string | null;
 }
 
+export interface UrlMetadata {
+  url: string;
+  title?: string;
+  description?: string;
+  image?: string | null;
+  siteName?: string;
+  error?: string;
+}
+
 export const fetchIdeas = async (): Promise<IdeaTodo[]> => {
   try {
     const { data, error } = await supabase
@@ -34,19 +43,65 @@ export const fetchIdeas = async (): Promise<IdeaTodo[]> => {
   }
 };
 
+// URL detection — first http(s) URL in a string.
+export const URL_REGEX = /https?:\/\/[^\s<>"']+/i;
+
+export const fetchUrlMetadata = async (url: string): Promise<UrlMetadata | null> => {
+  try {
+    const res = await fetch(`/api/url-metadata?url=${encodeURIComponent(url)}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as UrlMetadata;
+    return data;
+  } catch (err) {
+    console.error('fetchUrlMetadata error:', err);
+    return null;
+  }
+};
+
 export const submitIdea = async (
   ideaText: string,
-  authorName: string
+  authorName: string,
+  metadata?: UrlMetadata | null
 ): Promise<{ success: boolean; error?: string }> => {
   try {
     const now = new Date();
-    const dateStr = now.toLocaleDateString('da-DK', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString('da-DK', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    // If we have URL metadata, store as JSON so downstream apps (TODO's
+    // parseDescription) can pick up url + image + tags directly.
+    // Otherwise fall back to the legacy HTML format.
+    let description: string;
+    if (metadata && metadata.url && !metadata.error) {
+      description = JSON.stringify({
+        shortDescription: ideaText,
+        description: ideaText,
+        url: metadata.url,
+        image: metadata.image || null,
+        title: metadata.title || null,
+        siteName: metadata.siteName || null,
+        metaDescription: metadata.description || null,
+        tags: ['IDEER', authorName],
+        submittedBy: authorName,
+        submittedAt: now.toISOString(),
+        dateLabel: dateStr,
+      });
+    } else {
+      description = `<p><strong>Idé:</strong> ${ideaText}</p><p><strong>Fra:</strong> ${authorName}</p><p><strong>Dato:</strong> ${dateStr}</p>`;
+    }
+
+    const titleText = metadata?.title?.trim() || ideaText;
 
     const { error } = await supabase
       .from('todos')
       .insert({
-        title: `💡 IDÉBOKS: ${ideaText.substring(0, 80)}${ideaText.length > 80 ? '...' : ''}`,
-        description: `<p><strong>Idé:</strong> ${ideaText}</p><p><strong>Fra:</strong> ${authorName}</p><p><strong>Dato:</strong> ${dateStr}</p>`,
+        title: `💡 IDÉBOKS: ${titleText.substring(0, 80)}${titleText.length > 80 ? '...' : ''}`,
+        description,
         assigned_to: MARIA_EMPLOYEE_ID,
         priority: 'Normal',
         category: 'IDEER',
