@@ -237,6 +237,10 @@ const InspirationPage = () => {
     setFormTags(link.tags);
     lastLookedUp.current = link.url || null;
     setShowForm(true);
+    // Wait for the form to render, then scroll it into view.
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   };
 
   const handleFetchMeta = async () => {
