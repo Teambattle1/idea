@@ -21,6 +21,36 @@ function synthHtml(data: { title?: string; image?: string; description?: string 
   return parts.join('');
 }
 
+async function fetchViaOpengraphIo(url: string): Promise<{ html: string } | null> {
+  const key = process.env.OPENGRAPH_IO_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch(
+      `https://opengraph.io/api/1.1/site/${encodeURIComponent(url)}?app_id=${key}`,
+      { headers: { Accept: 'application/json' } },
+    );
+    if (!res.ok) return null;
+    const json: any = await res.json();
+    const graph = json.hybridGraph || json.openGraph || null;
+    if (!graph) return null;
+
+    const image =
+      typeof graph.image === 'string'
+        ? graph.image
+        : graph.image?.url || '';
+
+    return {
+      html: synthHtml({
+        title: graph.title || '',
+        image: image || '',
+        description: graph.description || '',
+      }),
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function fetchViaMicrolink(url: string): Promise<{ html: string } | null> {
   try {
     const res = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`, {
@@ -95,12 +125,23 @@ const handler: Handler = async (event) => {
     // Network error — try Microlink.
   }
 
-  const fallback = await fetchViaMicrolink(url);
-  if (fallback) {
+  // Primary fallback: opengraph.io (needs OPENGRAPH_IO_KEY env var). Handles
+  // antibot sites like Etsy/Amazon. Falls through to Microlink if missing.
+  const og = await fetchViaOpengraphIo(url);
+  if (og) {
     return {
       statusCode: 200,
       headers: CORS,
-      body: JSON.stringify({ ...fallback, fetchedUrl: url, source: 'microlink' }),
+      body: JSON.stringify({ ...og, fetchedUrl: url, source: 'opengraph.io' }),
+    };
+  }
+
+  const ml = await fetchViaMicrolink(url);
+  if (ml) {
+    return {
+      statusCode: 200,
+      headers: CORS,
+      body: JSON.stringify({ ...ml, fetchedUrl: url, source: 'microlink' }),
     };
   }
 
