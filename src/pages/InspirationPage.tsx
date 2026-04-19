@@ -12,6 +12,8 @@ import {
   Pencil,
   Check,
   Folder,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import Header from '../components/Header';
 import TagBadge from '../components/TagBadge';
@@ -172,6 +174,14 @@ const InspirationPage = () => {
   const [formTags, setFormTags] = useState<string[]>([]);
 
   const [filterSection, setFilterSection] = useState<string>('');
+  const [detailLink, setDetailLink] = useState<InspirationLink | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'grid';
+    return (localStorage.getItem('inspiration-view') as 'grid' | 'list') || 'grid';
+  });
+  useEffect(() => {
+    localStorage.setItem('inspiration-view', viewMode);
+  }, [viewMode]);
 
   const [refreshProgress, setRefreshProgress] = useState<{ done: number; total: number } | null>(null);
   const refreshCancelled = useRef(false);
@@ -401,6 +411,30 @@ const InspirationPage = () => {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <div className="flex items-center bg-white/5 border border-white/10 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded ${
+                  viewMode === 'grid'
+                    ? 'bg-purple-600/30 text-purple-200'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+                title="Grid view"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded ${
+                  viewMode === 'list'
+                    ? 'bg-purple-600/30 text-purple-200'
+                    : 'text-gray-500 hover:text-gray-300'
+                }`}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
             {(incompleteCount > 0 || refreshProgress) && (
               <button
                 onClick={handleRefreshAll}
@@ -628,17 +662,100 @@ const InspirationPage = () => {
               {filterSection ? 'Try another section or clear the filter.' : 'Add your first link to get started.'}
             </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        ) : viewMode === 'list' ? (
+          <div className="divide-y divide-white/5 border border-white/10 rounded-xl overflow-hidden bg-battle-grey/30">
             {visibleLinks.map((link) => (
               <div
                 key={link.id}
-                className="bg-battle-grey rounded-xl border border-white/10 hover:border-purple-500/30 transition-all group overflow-hidden flex flex-col"
+                className="group flex items-center gap-3 px-3 py-2 hover:bg-white/5 transition-colors"
               >
-                {/* Image */}
-                {link.image ? (
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
-                    <div className="aspect-video overflow-hidden bg-battle-dark relative">
+                <a
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 rounded-lg overflow-hidden bg-battle-dark flex-shrink-0 flex items-center justify-center"
+                >
+                  {link.image ? (
+                    <img
+                      src={link.image}
+                      alt={link.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <ImageIcon className="w-5 h-5 text-gray-700" />
+                  )}
+                </a>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-white font-medium truncate hover:text-purple-300"
+                    >
+                      {link.title}
+                    </a>
+                    {link.section && (
+                      <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 text-[10px] font-medium">
+                        <Folder className="w-2.5 h-2.5" />
+                        {link.section}
+                      </span>
+                    )}
+                  </div>
+                  {link.description && (
+                    <p className="text-xs text-gray-500 truncate">{link.description}</p>
+                  )}
+                </div>
+                <span className="text-xs text-gray-600 flex-shrink-0">
+                  {new Date(link.createdAt).toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                  })}
+                </span>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded text-gray-400 hover:text-purple-300 hover:bg-white/5"
+                    title="Visit"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <button
+                    onClick={() => startEdit(link)}
+                    className="p-1.5 rounded text-gray-400 hover:text-purple-300 hover:bg-white/5"
+                    title="Edit"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(link.id)}
+                    className="p-1.5 rounded text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-4">
+            {visibleLinks.map((link) => (
+              <div key={link.id} className="flex flex-col">
+                <div className="bg-battle-grey rounded-xl border border-white/10 hover:border-purple-500/30 transition-all group overflow-hidden flex flex-col flex-1">
+                  {/* Image — click opens detail card */}
+                  <button
+                    type="button"
+                    onClick={() => setDetailLink(link)}
+                    className="aspect-video overflow-hidden bg-battle-dark relative w-full cursor-pointer"
+                    title="Åbn detaljer"
+                  >
+                    {link.image ? (
                       <img
                         src={link.image}
                         alt={link.title}
@@ -647,79 +764,186 @@ const InspirationPage = () => {
                           (e.target as HTMLImageElement).style.display = 'none';
                         }}
                       />
-                    </div>
-                  </a>
-                ) : (
-                  <a href={link.url} target="_blank" rel="noopener noreferrer">
-                    <div className="aspect-video overflow-hidden bg-battle-dark flex items-center justify-center">
-                      <ImageIcon className="w-10 h-10 text-gray-700" />
-                    </div>
-                  </a>
-                )}
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-10 h-10 text-gray-700" />
+                      </div>
+                    )}
+                  </button>
 
-                {/* Content */}
-                <div className="p-4 space-y-2 flex-1 flex flex-col">
-                  <div className="flex items-start gap-2">
-                    <h3 className="text-white font-semibold text-base line-clamp-2 flex-1">
+                  {/* Content */}
+                  <div className="p-3 space-y-1.5 flex-1 flex flex-col">
+                    <h3
+                      className="text-white font-semibold text-xs leading-snug line-clamp-2"
+                      title={link.title}
+                    >
                       {link.title}
                     </h3>
+
                     {link.section && (
-                      <span className="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[10px] font-medium">
-                        <Folder className="w-3 h-3" />
+                      <span className="self-start inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-purple-500/15 text-purple-300 text-[9px] font-medium">
+                        <Folder className="w-2.5 h-2.5" />
                         {link.section}
                       </span>
                     )}
-                  </div>
 
-                  {link.description && (
-                    <p className="text-sm text-gray-400 line-clamp-3">{link.description}</p>
-                  )}
+                    {link.description && (
+                      <p className="text-[11px] text-gray-400 line-clamp-2">{link.description}</p>
+                    )}
 
-                  {link.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {link.tags.map((t) => (
-                        <TagBadge key={t} tag={t} />
-                      ))}
-                    </div>
-                  )}
+                    {link.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {link.tags.slice(0, 3).map((t) => (
+                          <TagBadge key={t} tag={t} />
+                        ))}
+                      </div>
+                    )}
 
-                  <div className="flex items-center justify-between pt-2 mt-auto">
                     <a
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg text-xs font-medium transition-colors"
+                      className="mt-auto flex items-center justify-center gap-1 px-2 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded-lg text-[11px] font-medium transition-colors"
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3 h-3" />
                       Visit Site
                     </a>
+                  </div>
+                </div>
 
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-600">
-                        {new Date(link.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                        })}
-                      </span>
-                      <button
-                        onClick={() => startEdit(link)}
-                        className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-purple-300 transition-all p-1"
-                        title="Edit"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(link.id)}
-                        className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 transition-all p-1"
-                        title="Delete"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                {/* Date under card */}
+                <div className="flex items-center justify-between px-1 pt-1.5 text-[10px] text-gray-600">
+                  <span>
+                    {new Date(link.createdAt).toLocaleDateString('en-GB', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })}
+                  </span>
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => startEdit(link)}
+                      className="text-gray-500 hover:text-purple-300 p-0.5"
+                      title="Edit"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(link.id)}
+                      className="text-gray-500 hover:text-red-400 p-0.5"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Detail modal */}
+        {detailLink && (
+          <div
+            className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center p-4 overflow-y-auto"
+            onClick={() => setDetailLink(null)}
+          >
+            <div
+              className="bg-battle-dark border border-white/10 rounded-xl w-full max-w-2xl mt-10 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+                <h3 className="text-lg font-semibold text-white pr-4">{detailLink.title}</h3>
+                <button
+                  onClick={() => setDetailLink(null)}
+                  className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 flex-shrink-0"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {detailLink.image && (
+                <div className="aspect-video overflow-hidden bg-battle-black">
+                  <img
+                    src={detailLink.image}
+                    alt={detailLink.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="p-5 space-y-4">
+                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+                  <span className="inline-flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" />
+                    Tilføjet{' '}
+                    {new Date(detailLink.createdAt).toLocaleDateString('da-DK', {
+                      day: '2-digit',
+                      month: 'long',
+                      year: 'numeric',
+                    })}
+                  </span>
+                  {detailLink.section && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300">
+                      <Folder className="w-3 h-3" />
+                      {detailLink.section}
+                    </span>
+                  )}
+                </div>
+
+                {detailLink.description ? (
+                  <div>
+                    <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                      Noter
+                    </div>
+                    <p className="text-sm text-gray-200 whitespace-pre-wrap leading-relaxed">
+                      {detailLink.description}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500 italic">Ingen noter endnu.</p>
+                )}
+
+                {detailLink.tags.length > 0 && (
+                  <div>
+                    <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                      Tags
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {detailLink.tags.map((t) => (
+                        <TagBadge key={t} tag={t} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 px-5 py-4 border-t border-white/10">
+                <button
+                  onClick={() => {
+                    const l = detailLink;
+                    setDetailLink(null);
+                    startEdit(l);
+                  }}
+                  className="px-4 py-2 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-white/5 flex items-center gap-1.5"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Rediger
+                </button>
+                <a
+                  href={detailLink.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Besøg site
+                </a>
+              </div>
+            </div>
           </div>
         )}
       </div>

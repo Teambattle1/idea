@@ -3,6 +3,7 @@ import { Plus, Search, Loader2, Building2, Download } from 'lucide-react';
 import Header from '../components/Header';
 import AgencyCard from '../components/AgencyCard';
 import AgencyForm from '../components/AgencyForm';
+import AgencyMap from '../components/AgencyMap';
 import {
   createAgency,
   deleteAgency,
@@ -120,21 +121,21 @@ const AgenciesPage = () => {
       <div className="max-w-5xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2 uppercase tracking-wide">
               <Building2 className="w-6 h-6 text-battle-orange" />
               Agencies
             </h2>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <p className="text-sm text-gray-400 mt-0.5 uppercase tracking-wide">
               {loading
-                ? 'Loading…'
-                : `${filtered.length} of ${agencies.length} ${agencies.length === 1 ? 'agency' : 'agencies'}`}
+                ? 'LOADING…'
+                : `${filtered.length} OF ${agencies.length} ${agencies.length === 1 ? 'AGENCY' : 'AGENCIES'}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleImportFromMeet}
               disabled={importing}
-              className="px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-50 text-blue-200 border border-blue-500/30 rounded-lg text-sm font-medium flex items-center gap-1.5"
+              className="px-3 py-2 bg-blue-600/30 hover:bg-blue-600/50 disabled:opacity-50 text-blue-200 border border-blue-500/30 rounded-lg text-sm font-medium uppercase tracking-wide flex items-center gap-1.5"
               title="Import companies from meet.eventday.dk"
             >
               {importing ? (
@@ -146,7 +147,7 @@ const AgenciesPage = () => {
             </button>
             <button
               onClick={openCreate}
-              className="px-4 py-2 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-sm font-medium flex items-center gap-1.5"
+              className="px-4 py-2 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-sm font-medium uppercase tracking-wide flex items-center gap-1.5"
             >
               <Plus className="w-4 h-4" />
               Add agency
@@ -165,37 +166,41 @@ const AgenciesPage = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
-              placeholder="Search by name, city, contact…"
+              placeholder="SEARCH BY NAME, CITY, CONTACT…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-battle-grey border border-white/10 text-white rounded-lg text-sm focus:border-battle-orange focus:outline-none placeholder:text-gray-500"
+              className="w-full pl-9 pr-3 py-2 bg-battle-grey border border-white/10 text-white rounded-lg text-sm uppercase tracking-wide focus:border-battle-orange focus:outline-none placeholder:text-gray-500"
             />
           </div>
           <select
             value={countryFilter}
             onChange={(e) => setCountryFilter(e.target.value)}
-            className="bg-battle-grey border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:border-battle-orange focus:outline-none"
+            className="bg-battle-grey border border-white/10 text-white rounded-lg px-3 py-2 text-sm uppercase tracking-wide focus:border-battle-orange focus:outline-none"
           >
-            <option value="">All countries</option>
+            <option value="">ALL COUNTRIES</option>
             {countries.map((c) => (
               <option key={c} value={c}>
-                {COUNTRIES[c]?.flag} {COUNTRIES[c]?.label || c}
+                {(COUNTRIES[c]?.label || c).toUpperCase()}
               </option>
             ))}
           </select>
           <select
             value={serviceFilter}
             onChange={(e) => setServiceFilter(e.target.value)}
-            className="bg-battle-grey border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:border-battle-orange focus:outline-none"
+            className="bg-battle-grey border border-white/10 text-white rounded-lg px-3 py-2 text-sm uppercase tracking-wide focus:border-battle-orange focus:outline-none"
           >
-            <option value="">All services</option>
+            <option value="">ALL SERVICES</option>
             {services.map((s) => (
               <option key={s} value={s}>
-                {s}
+                {s.toUpperCase()}
               </option>
             ))}
           </select>
         </div>
+
+        {!loading && filtered.length > 0 && (
+          <AgencyMap agencies={filtered} onSelect={openEdit} />
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-gray-400">
@@ -211,16 +216,46 @@ const AgenciesPage = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {filtered.map((a) => (
-              <AgencyCard
-                key={a.id}
-                agency={a}
-                onEdit={openEdit}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
+          (() => {
+            const partners = filtered.filter((a) => a.badges.includes('PARTNER'));
+            const others = filtered.filter((a) => !a.badges.includes('PARTNER'));
+            const sectionHeading = (title: string, count: number) => (
+              <div className="flex items-baseline gap-2 mb-3 mt-6 first:mt-0">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-300">
+                  {title}
+                </h3>
+                <span className="text-xs text-gray-500">{count}</span>
+              </div>
+            );
+            const grid = (list: Agency[]) => (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {list.map((a) => (
+                  <AgencyCard
+                    key={a.id}
+                    agency={a}
+                    onEdit={openEdit}
+                    onDelete={handleDelete}
+                  />
+                ))}
+              </div>
+            );
+            return (
+              <>
+                {partners.length > 0 && (
+                  <>
+                    {sectionHeading('Partners', partners.length)}
+                    {grid(partners)}
+                  </>
+                )}
+                {others.length > 0 && (
+                  <>
+                    {sectionHeading('Other', others.length)}
+                    {grid(others)}
+                  </>
+                )}
+              </>
+            );
+          })()
         )}
       </div>
 

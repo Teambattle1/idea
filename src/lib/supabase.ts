@@ -1,10 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
-import { Activity, Agency, CompanyProfile, COUNTRIES, MaterialFile } from '../types';
+import {
+  Activity,
+  Agency,
+  CompanyProfile,
+  COUNTRIES,
+  CustomProject,
+  EventContact,
+  MaterialFile,
+  ProjectIdea,
+} from '../types';
 
 const supabaseUrl = 'https://ilbjytyukicbssqftmma.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYmp5dHl1a2ljYnNzcWZ0bW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MzA0NjEsImV4cCI6MjA3MDQwNjQ2MX0.I_PWByMPcOYhWgeq9MxXgOo-NCZYfEuzYmo35XnBFAY';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Singleton guard: Vite HMR re-evaluates this module, which would otherwise
+// create multiple GoTrueClient instances sharing the same storage key.
+const globalForSupabase = globalThis as unknown as {
+  __ideasSupabase?: ReturnType<typeof createClient>;
+};
+export const supabase =
+  globalForSupabase.__ideasSupabase ??
+  (globalForSupabase.__ideasSupabase = createClient(supabaseUrl, supabaseAnonKey));
 
 const IDEA_EMPLOYEE_ID = 'emp_z4ftvagjq';
 const STORAGE_BUCKET = 'idea-materials';
@@ -348,8 +364,18 @@ function agencyToRow(agency: Omit<Agency, 'id' | 'createdAt'>) {
     contactName: agency.contactName,
     contactEmail: agency.contactEmail,
     contactPhone: agency.contactPhone,
+    contactNote: agency.contactNote,
+    contactWhatsapp: agency.contactWhatsapp,
+    contactTeams: agency.contactTeams,
+    contactZoom: agency.contactZoom,
+    contactLinkedin: agency.contactLinkedin,
+    facebook: agency.facebook,
+    linkedin: agency.linkedin,
+    instagram: agency.instagram,
+    additionalContacts: agency.additionalContacts,
     services: agency.services,
     tags: agency.tags,
+    badges: agency.badges,
     notes: agency.notes,
   };
   return {
@@ -381,8 +407,29 @@ function rowToAgency(row: TodoRow): Agency {
     contactName: data.contactName || '',
     contactEmail: data.contactEmail || '',
     contactPhone: data.contactPhone || '',
+    contactNote: data.contactNote || '',
+    contactWhatsapp: data.contactWhatsapp || '',
+    contactTeams: data.contactTeams || '',
+    contactZoom: data.contactZoom || '',
+    contactLinkedin: data.contactLinkedin || '',
+    facebook: data.facebook || '',
+    linkedin: data.linkedin || '',
+    instagram: data.instagram || '',
+    additionalContacts: Array.isArray(data.additionalContacts)
+      ? data.additionalContacts.map((c: any) => ({
+          name: c?.name || '',
+          email: c?.email || '',
+          phone: c?.phone || '',
+          note: c?.note || '',
+          whatsapp: c?.whatsapp || '',
+          teams: c?.teams || '',
+          zoom: c?.zoom || '',
+          linkedin: c?.linkedin || '',
+        }))
+      : [],
     services: Array.isArray(data.services) ? data.services : [],
     tags: Array.isArray(data.tags) ? data.tags : [],
+    badges: Array.isArray(data.badges) ? data.badges : [],
     notes: data.notes || '',
     createdAt: row.created_at,
   };
@@ -431,6 +478,96 @@ export async function updateAgency(
 }
 
 export async function deleteAgency(id: string): Promise<{ success: boolean }> {
+  try {
+    const { error } = await supabase.from('todos').delete().eq('id', id);
+    return { success: !error };
+  } catch {
+    return { success: false };
+  }
+}
+
+// --- Event Contacts ---
+
+function eventContactToRow(c: Omit<EventContact, 'id' | 'createdAt'>) {
+  const payload = {
+    country: c.country,
+    city: c.city,
+    company: c.company,
+    email: c.email,
+    phone: c.phone,
+    note: c.note,
+  };
+  return {
+    title: c.name,
+    description: JSON.stringify(payload),
+    assigned_to: IDEA_EMPLOYEE_ID,
+    priority: 'Normal',
+    category: 'idea-event-contact',
+    resolved: false,
+    is_error: false,
+  };
+}
+
+function rowToEventContact(row: TodoRow): EventContact {
+  let data: any = {};
+  try {
+    data = JSON.parse(row.description || '{}');
+  } catch {
+    data = {};
+  }
+  return {
+    id: row.id,
+    name: row.title,
+    country: data.country || '',
+    city: data.city || '',
+    company: data.company || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    note: data.note || '',
+    createdAt: row.created_at,
+  };
+}
+
+export async function fetchEventContacts(): Promise<EventContact[]> {
+  try {
+    const { data, error } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('category', 'idea-event-contact')
+      .order('title', { ascending: true });
+    if (error || !data) return [];
+    return (data as TodoRow[]).map(rowToEventContact);
+  } catch {
+    return [];
+  }
+}
+
+export async function createEventContact(
+  c: Omit<EventContact, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('todos').insert(eventContactToRow(c));
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function updateEventContact(
+  id: string,
+  c: Omit<EventContact, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('todos').update(eventContactToRow(c)).eq('id', id);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function deleteEventContact(id: string): Promise<{ success: boolean }> {
   try {
     const { error } = await supabase.from('todos').delete().eq('id', id);
     return { success: !error };
@@ -496,10 +633,34 @@ function meetCompanyToAgencyDraft(row: MeetCompanyRow): Omit<Agency, 'id' | 'cre
     contactName: primaryParticipant?.name || '',
     contactEmail: row.contact_email || primaryParticipant?.email || '',
     contactPhone: row.contact_phone || primaryParticipant?.phone || '',
+    contactNote: '',
+    contactWhatsapp: '',
+    contactTeams: '',
+    contactZoom: '',
+    contactLinkedin: '',
+    facebook: '',
+    linkedin: '',
+    instagram: '',
+    additionalContacts: [],
     services: Array.isArray(row.specialties) ? row.specialties : [],
     tags: [],
+    badges: ['PARTNER'],
     notes: notesParts.join('\n\n'),
   };
+}
+
+// Adds a badge to every existing agency that doesn't already have it.
+// Used as a one-shot migration after introducing badges.
+export async function addBadgeToAllAgencies(badge: string): Promise<number> {
+  const agencies = await fetchAgencies();
+  let updated = 0;
+  for (const a of agencies) {
+    if (a.badges.includes(badge)) continue;
+    const { id: _id, createdAt: _c, ...rest } = a;
+    const result = await updateAgency(a.id, { ...rest, badges: [...a.badges, badge] });
+    if (result.success) updated++;
+  }
+  return updated;
 }
 
 export async function fetchMeetCompanies(): Promise<MeetCompanyRow[]> {
@@ -555,4 +716,173 @@ export async function importAgenciesFromMeet(): Promise<MeetImportResult> {
   }
 
   return { created, skipped, failed, total: meetRows.length };
+}
+
+// --- Project Ideas ---
+// Stored in `todos` under category `idea-project-item`. description is JSON
+// { projectSlug, url, note }. Native due_date column carries optional deadline.
+
+// Track ideas are mirrored into the todo.eventday.dk "TASK IDEAS" custom
+// list (custom_lists.id='taskideas') so they appear there natively.
+// Assigned to 'thomas' so they show in his todo sidebar.
+const TRACK_SLUG = 'teamaction';
+const TASK_IDEAS_CATEGORY = 'custom:taskideas';
+const TASK_IDEAS_ASSIGNEE = 'emp_0yyp87nsx'; // Thomas Sunke
+
+function projectIdeaToRow(i: Omit<ProjectIdea, 'id' | 'createdAt'>) {
+  const isTrack = i.projectSlug === TRACK_SLUG;
+  const payload = {
+    projectSlug: i.projectSlug,
+    url: i.url,
+    note: i.note,
+  };
+  return {
+    title: i.title,
+    description: JSON.stringify(payload),
+    assigned_to: isTrack ? TASK_IDEAS_ASSIGNEE : IDEA_EMPLOYEE_ID,
+    priority: 'Normal',
+    category: isTrack ? TASK_IDEAS_CATEGORY : 'idea-project-item',
+    resolved: false,
+    is_error: false,
+    due_date: i.dueDate || null,
+  };
+}
+
+function rowToProjectIdea(row: any): ProjectIdea {
+  let data: any = {};
+  try {
+    data = JSON.parse(row.description || '{}');
+  } catch {
+    data = {};
+  }
+  return {
+    id: row.id,
+    projectSlug: data.projectSlug || '',
+    title: row.title,
+    url: data.url || '',
+    note: data.note || '',
+    dueDate: row.due_date || null,
+    createdAt: row.created_at,
+  };
+}
+
+export async function fetchProjectIdeas(): Promise<ProjectIdea[]> {
+  try {
+    // Include Track ideas living in the "TASK IDEAS" todo list. Filter those
+    // down to rows that actually carry a projectSlug in description so we
+    // don't surface unrelated todos created straight from todo.eventday.dk.
+    const { data, error } = await supabase
+      .from('todos')
+      .select('*')
+      .in('category', ['idea-project-item', TASK_IDEAS_CATEGORY])
+      .order('created_at', { ascending: false });
+    if (error || !data) return [];
+    return (data as any[])
+      .map(rowToProjectIdea)
+      .filter((i) => i.projectSlug);
+  } catch {
+    return [];
+  }
+}
+
+export async function createProjectIdea(
+  i: Omit<ProjectIdea, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('todos').insert(projectIdeaToRow(i));
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function updateProjectIdea(
+  id: string,
+  i: Omit<ProjectIdea, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('todos').update(projectIdeaToRow(i)).eq('id', id);
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function deleteProjectIdea(id: string): Promise<{ success: boolean }> {
+  try {
+    const { error } = await supabase.from('todos').delete().eq('id', id);
+    return { success: !error };
+  } catch {
+    return { success: false };
+  }
+}
+
+// --- Custom Projects ---
+// Category `idea-project`. description JSON: { slug, icon, color }.
+
+function customProjectToRow(p: Omit<CustomProject, 'id' | 'createdAt'>) {
+  const payload = { slug: p.slug, icon: p.icon, color: p.color };
+  return {
+    title: p.name,
+    description: JSON.stringify(payload),
+    assigned_to: IDEA_EMPLOYEE_ID,
+    priority: 'Normal',
+    category: 'idea-project',
+    resolved: false,
+    is_error: false,
+  };
+}
+
+function rowToCustomProject(row: TodoRow): CustomProject {
+  let data: any = {};
+  try {
+    data = JSON.parse(row.description || '{}');
+  } catch {
+    data = {};
+  }
+  return {
+    id: row.id,
+    slug: data.slug || row.id,
+    name: row.title,
+    icon: data.icon || 'Rocket',
+    color: data.color || '#dc328c',
+    createdAt: row.created_at,
+  };
+}
+
+export async function fetchCustomProjects(): Promise<CustomProject[]> {
+  try {
+    const { data, error } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('category', 'idea-project')
+      .order('title', { ascending: true });
+    if (error || !data) return [];
+    return (data as TodoRow[]).map(rowToCustomProject);
+  } catch {
+    return [];
+  }
+}
+
+export async function createCustomProject(
+  p: Omit<CustomProject, 'id' | 'createdAt'>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { error } = await supabase.from('todos').insert(customProjectToRow(p));
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch {
+    return { success: false, error: 'Unexpected error' };
+  }
+}
+
+export async function deleteCustomProject(id: string): Promise<{ success: boolean }> {
+  try {
+    const { error } = await supabase.from('todos').delete().eq('id', id);
+    return { success: !error };
+  } catch {
+    return { success: false };
+  }
 }

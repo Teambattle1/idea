@@ -1,6 +1,5 @@
-import { Globe, Mail, Phone, MapPin, Pencil, Trash2, Building2 } from 'lucide-react';
-import { Agency, COUNTRIES } from '../types';
-import TagBadge from './TagBadge';
+import { Building2, Trash2 } from 'lucide-react';
+import { Agency, AGENCY_BADGE_STYLES } from '../types';
 
 interface Props {
   agency: Agency;
@@ -9,115 +8,93 @@ interface Props {
 }
 
 const AgencyCard = ({ agency, onEdit, onDelete }: Props) => {
-  const country = COUNTRIES[agency.country];
-  const location = [agency.city, country?.label].filter(Boolean).join(', ');
-
   return (
-    <div className="bg-battle-grey rounded-xl border border-white/10 hover:border-battle-orange/30 transition-colors overflow-hidden group">
-      <div className="flex gap-4 p-4">
-        <div className="flex-shrink-0 w-20 h-20 rounded-lg bg-battle-dark border border-white/10 flex items-center justify-center overflow-hidden">
+    <button
+      type="button"
+      onClick={() => onEdit(agency)}
+      className="group relative flex flex-col items-center text-center p-3 rounded-xl hover:bg-white/5 transition-colors w-full cursor-pointer"
+      title={`Åbn ${agency.name}`}
+    >
+      <div className="relative">
+        <div className="w-24 h-24 rounded-full bg-black border border-white/10 overflow-hidden flex items-center justify-center">
           {agency.logo ? (
             <img
               src={agency.logo}
               alt={agency.name}
               className="w-full h-full object-contain"
               onError={(e) => {
-                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                const el = e.currentTarget as HTMLImageElement;
+                el.style.display = 'none';
+                const fallback = el.nextElementSibling as HTMLElement | null;
+                if (fallback) fallback.style.display = 'flex';
               }}
             />
-          ) : (
-            <Building2 className="w-8 h-8 text-gray-500" />
-          )}
+          ) : null}
+          <div
+            className="w-full h-full flex items-center justify-center text-gray-400"
+            style={{ display: agency.logo ? 'none' : 'flex' }}
+          >
+            <Building2 className="w-8 h-8" />
+          </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <h3 className="text-white font-semibold text-base truncate">
-                {country?.flag ? <span className="mr-1.5">{country.flag}</span> : null}
-                {agency.name}
-              </h3>
-              {location && (
-                <p className="text-sm text-gray-400 flex items-center gap-1 mt-0.5">
-                  <MapPin className="w-3.5 h-3.5" />
-                  {location}
-                </p>
-              )}
-            </div>
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button
-                onClick={() => onEdit(agency)}
-                className="p-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/10"
-                title="Edit"
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => onDelete(agency)}
-                className="p-1.5 rounded-md text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400">
-            {agency.website && (
-              <a
-                href={agency.website.startsWith('http') ? agency.website : `https://${agency.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1 hover:text-battle-orange"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Globe className="w-3.5 h-3.5" />
-                {agency.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-              </a>
-            )}
-            {agency.contactEmail && (
-              <a
-                href={`mailto:${agency.contactEmail}`}
-                className="flex items-center gap-1 hover:text-battle-orange"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Mail className="w-3.5 h-3.5" />
-                {agency.contactEmail}
-              </a>
-            )}
-            {agency.contactPhone && (
-              <a
-                href={`tel:${agency.contactPhone}`}
-                className="flex items-center gap-1 hover:text-battle-orange"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Phone className="w-3.5 h-3.5" />
-                {agency.contactPhone}
-              </a>
-            )}
-          </div>
-
-          {agency.contactName && (
-            <p className="mt-1.5 text-xs text-gray-300">Contact: {agency.contactName}</p>
-          )}
-
-          {(agency.services.length > 0 || agency.tags.length > 0) && (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {agency.services.map((s) => (
-                <TagBadge key={`s-${s}`} tag={s} />
-              ))}
-              {agency.tags.map((t) => (
-                <TagBadge key={`t-${t}`} tag={t} />
-              ))}
-            </div>
-          )}
-
-          {agency.notes && (
-            <p className="mt-2 text-xs text-gray-400 line-clamp-2">{agency.notes}</p>
-          )}
-        </div>
+        <span
+          role="button"
+          tabIndex={0}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete(agency);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(agency);
+            }
+          }}
+          className="absolute -top-1 -right-1 p-1.5 rounded-full bg-battle-dark border border-white/10 text-gray-300 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Delete"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </span>
       </div>
-    </div>
+
+      <div className="mt-3 flex items-center gap-1.5 justify-center">
+        {agency.country ? (
+          <img
+            src={`https://flagcdn.com/20x15/${agency.country.toLowerCase()}.png`}
+            alt=""
+            className="w-5 h-[15px] rounded-sm flex-shrink-0"
+          />
+        ) : null}
+        <h3
+          className="text-white font-bold uppercase tracking-wide text-sm leading-tight line-clamp-2"
+          title={agency.name}
+        >
+          {agency.name}
+        </h3>
+      </div>
+
+      {agency.badges.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-1 justify-center">
+          {agency.badges.map((b) => {
+            const style = AGENCY_BADGE_STYLES[b] || {
+              bg: 'bg-white/10',
+              text: 'text-gray-300',
+              border: 'border-white/20',
+            };
+            return (
+              <span
+                key={b}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wider border ${style.bg} ${style.text} ${style.border}`}
+              >
+                {b}
+              </span>
+            );
+          })}
+        </div>
+      )}
+    </button>
   );
 };
 

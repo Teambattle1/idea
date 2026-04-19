@@ -7,6 +7,8 @@ import EditActivityPage from './pages/EditActivityPage';
 import ScrapePage from './pages/ScrapePage';
 import InspirationPage from './pages/InspirationPage';
 import AgenciesPage from './pages/AgenciesPage';
+import EventContactsPage from './pages/EventContactsPage';
+import ProjectsPage from './pages/ProjectsPage';
 import SplashScreen from './components/SplashScreen';
 
 const App = () => {
@@ -24,6 +26,8 @@ const App = () => {
           <Route path="/scrape" element={<ScrapePage />} />
           <Route path="/inspiration" element={<InspirationPage />} />
           <Route path="/agencies" element={<AgenciesPage />} />
+          <Route path="/event-contacts" element={<EventContactsPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
           <Route path="/edit/:id" element={<EditActivityPage />} />
         </Routes>
       </BrowserRouter>
