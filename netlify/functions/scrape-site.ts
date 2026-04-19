@@ -1,5 +1,27 @@
 import type { Handler } from '@netlify/functions';
 
+// Netlify synchronous functions cap response bodies at 6 MB. Modern pages with
+// inlined scripts/trackers can easily push 50 sub-pages past that limit, which
+// surfaces as a 502 back to the client. We strip everything the downstream
+// extractor doesn't need before returning.
+const MAX_RESPONSE_BYTES = 5_000_000; // headroom under Netlify's 6 MB cap
+const MAX_SUBPAGES = 30;
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, '')
+    .replace(/<iframe[\s\S]*?<\/iframe>/gi, '')
+    .replace(/<link\b[^>]*>/gi, '')
+    .replace(/\s+style=["'][^"']*["']/gi, '')
+    .replace(/\s+on[a-z]+=["'][^"']*["']/gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 const handler: Handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -63,15 +85,18 @@ const handler: Handler = async (event) => {
       };
     }
 
-    const html = await response.text();
+    const rawHtml = await response.text();
+    const html = stripHtml(rawHtml);
     const baseUrl = new URL(url);
+    let accumulatedBytes = html.length;
 
     // Find all internal links - be thorough: look in nav, main, product listings etc.
+    // Run against raw HTML so link discovery isn't affected by the strip pass.
     const linkRegex = /<a[^>]+href=["']([^"'#]+)["'][^>]*>/gi;
     const links = new Set<string>();
     let match;
 
-    while ((match = linkRegex.exec(html)) !== null) {
+    while ((match = linkRegex.exec(rawHtml)) !== null) {
       let href = match[1];
       if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('javascript:')) continue;
       if (href.startsWith('//')) href = baseUrl.protocol + href;
@@ -92,12 +117,13 @@ const handler: Handler = async (event) => {
       }
     }
 
-    // Fetch each sub-page (limit to 50 for better coverage)
+    // Fetch each sub-page, capped so we don't exceed Netlify's 6 MB response limit.
     const subPages: Array<{ url: string; html: string }> = [];
-    const pagesToFetch = Array.from(links).slice(0, 50);
+    const pagesToFetch = Array.from(links).slice(0, MAX_SUBPAGES);
+    let budgetExceeded = false;
 
     // Fetch in batches of 10 for speed
-    for (let i = 0; i < pagesToFetch.length; i += 10) {
+    for (let i = 0; i < pagesToFetch.length && !budgetExceeded; i += 10) {
       const batch = pagesToFetch.slice(i, i + 10);
       const results = await Promise.allSettled(
         batch.map(async (pageUrl) => {
@@ -108,7 +134,7 @@ const handler: Handler = async (event) => {
           });
           if (pageResponse.ok) {
             const pageHtml = await pageResponse.text();
-            return { url: pageUrl, html: pageHtml };
+            return { url: pageUrl, html: stripHtml(pageHtml) };
           }
           return null;
         })
@@ -116,6 +142,11 @@ const handler: Handler = async (event) => {
 
       for (const r of results) {
         if (r.status === 'fulfilled' && r.value) {
+          accumulatedBytes += r.value.html.length + r.value.url.length;
+          if (accumulatedBytes > MAX_RESPONSE_BYTES) {
+            budgetExceeded = true;
+            break;
+          }
           subPages.push(r.value);
         }
       }
