@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Lightbulb, Plus, Sparkles } from 'lucide-react';
+import { Building2, Lightbulb, Plus, Sparkles } from 'lucide-react';
 
 const Header = () => {
   const location = useLocation();
   const isInspiration = location.pathname === '/inspiration';
+  const isAgencies = location.pathname === '/agencies';
 
   return (
     <div className="bg-battle-dark border-b border-battle-orange/30">
@@ -26,6 +27,17 @@ const Header = () => {
             >
               <Sparkles className="w-4 h-4" />
               Inspiration
+            </Link>
+            <Link
+              to="/agencies"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                isAgencies
+                  ? 'bg-blue-600/30 text-blue-300 border border-blue-500/30'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              Agencies
             </Link>
             <Link
               to="/create"

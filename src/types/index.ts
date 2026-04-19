@@ -39,6 +39,36 @@ export interface CompanyProfile {
   createdAt: string;
 }
 
+export interface Agency {
+  id: string;
+  name: string;
+  logo: string;
+  website: string;
+  country: string;
+  city: string;
+  address: string;
+  contactName: string;
+  contactEmail: string;
+  contactPhone: string;
+  services: string[];
+  tags: string[];
+  notes: string;
+  createdAt: string;
+}
+
+export const AGENCY_SERVICES = [
+  'Teambuilding',
+  'Events',
+  'Conferences',
+  'Kick-off',
+  'Leadership',
+  'Travel',
+  'Production',
+  'Catering',
+  'Venue',
+  'AV / Tech',
+];
+
 export const COUNTRIES: Record<string, { label: string; flag: string }> = {
   '': { label: 'Select country', flag: '' },
   DK: { label: 'Denmark', flag: '🇩🇰' },
