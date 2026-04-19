@@ -1,0 +1,20 @@
+- generic [ref=e5]:
+  - generic [ref=e6]:
+    - heading "TEAMCHALLENGE" [level=1] [ref=e7]
+    - paragraph [ref=e8]: Select your battleground
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - button "Today 0 Games" [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]: Today
+        - generic [ref=e13]: 0 Games
+      - button "Planned 0 Games" [ref=e15] [cursor=pointer]:
+        - generic [ref=e16]: Planned
+        - generic [ref=e17]: 0 Games
+      - button "Completed 0 Games" [ref=e18] [cursor=pointer]:
+        - generic [ref=e19]: Completed
+        - generic [ref=e20]: 0 Games
+    - paragraph [ref=e24]: Accessing Servers...
+  - generic [ref=e26]:
+    - generic [ref=e27]: "Manual Override:"
+    - textbox "ENTER GAME ID" [ref=e28]
+    - button "GO" [disabled] [ref=e29]

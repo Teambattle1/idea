@@ -1,0 +1,29 @@
+- generic [ref=e279]:
+  - button [ref=e281] [cursor=pointer]:
+    - img [ref=e282]
+  - heading "TEAMCHALLENGE" [level=1] [ref=e285]
+  - paragraph [ref=e286]: 20-04-26 / TEAK @ TEAK
+  - generic [ref=e287]:
+    - generic [ref=e288]:
+      - button "Results" [ref=e289] [cursor=pointer]:
+        - img [ref=e291]
+        - generic [ref=e297]: Results
+      - button "🔗" [ref=e298] [cursor=pointer]
+    - generic [ref=e299]:
+      - button "Showtime" [ref=e300] [cursor=pointer]:
+        - img [ref=e302]
+        - generic [ref=e305]: Showtime
+      - button "🔗" [ref=e306] [cursor=pointer]
+    - button "TaskMaster" [ref=e308] [cursor=pointer]:
+      - img [ref=e310]
+      - generic [ref=e314]: TaskMaster
+    - button "Timeline" [ref=e316] [cursor=pointer]:
+      - img [ref=e318]
+      - generic [ref=e321]: Timeline
+    - button "Client" [ref=e323] [cursor=pointer]:
+      - img [ref=e325]
+      - generic [ref=e328]: Client
+    - button "Admin" [ref=e330] [cursor=pointer]:
+      - img [ref=e332]
+      - generic [ref=e335]: Admin
+  - button "🔗 Kopiér session-link" [ref=e337] [cursor=pointer]

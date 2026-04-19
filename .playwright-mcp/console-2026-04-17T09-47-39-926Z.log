@@ -1,0 +1,13 @@
+[   76817ms] [ERROR] Failed to load resource: the server responded with a status of 406 () @ https://yktaxljydisfjyqhbnja.supabase.co/rest/v1/shared_galleries?select=*&game_id=eq.FK4TXMK3YJ:0
+[   76822ms] [ERROR] Failed to load resource: the server responded with a status of 406 () @ https://yktaxljydisfjyqhbnja.supabase.co/rest/v1/shared_tasks?select=*&game_id=eq.FK4TXMK3YJ:0
+[   81318ms] TypeError: Cannot read properties of undefined (reading 'length')
+    at Zw (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:113:38519)
+    at Io (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:48302)
+    at oc (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:71173)
+    at uf (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:81566)
+    at Hf (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:117434)
+    at Ug (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:116474)
+    at zc (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:116304)
+    at Uf (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:113077)
+    at e0 (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:125067)
+    at ks (https://loquiz.eventday.dk/assets/index-qC0MHfQl.js:48:123615)

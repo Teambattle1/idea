@@ -1,0 +1,2 @@
+[    2164ms] [ERROR] Failed to load resource: the server responded with a status of 406 () @ https://yktaxljydisfjyqhbnja.supabase.co/rest/v1/shared_galleries?select=*&game_id=eq.FK4TXMK3YJ:0
+[    2170ms] [ERROR] Failed to load resource: the server responded with a status of 406 () @ https://yktaxljydisfjyqhbnja.supabase.co/rest/v1/shared_tasks?select=*&game_id=eq.FK4TXMK3YJ:0
