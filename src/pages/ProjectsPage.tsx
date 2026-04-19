@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import * as Icons from 'lucide-react';
-import { ArrowLeft, Plus, Loader2, X, Trash2, Pencil, ExternalLink, Calendar } from 'lucide-react';
+import {
+  ArrowLeft,
+  Plus,
+  Loader2,
+  X,
+  Trash2,
+  Pencil,
+  ExternalLink,
+  Calendar,
+  ArrowRightLeft,
+} from 'lucide-react';
 import Header from '../components/Header';
 import {
   createCustomProject,
@@ -18,6 +28,7 @@ import {
   GAME_PROJECTS,
   GameProject,
   ProjectIdea,
+  ProjectIdeaSection,
 } from '../types';
 
 type AnyProject = GameProject | (CustomProject & { __custom: true });
@@ -27,35 +38,22 @@ type IdeaDraft = {
   url: string;
   note: string;
   dueDate: string;
+  section: ProjectIdeaSection;
 };
 
-const emptyDraft: IdeaDraft = { title: '', url: '', note: '', dueDate: '' };
+const emptyDraft: IdeaDraft = {
+  title: '',
+  url: '',
+  note: '',
+  dueDate: '',
+  section: 'improvement',
+};
 
-// Per-project scratchpad — free-text ideas/notes stored in localStorage so it
-// persists locally without a DB schema change.
-const ProjectScratchpad = ({ slug }: { slug: string }) => {
-  const key = `project-scratchpad-${slug}`;
-  const [text, setText] = useState('');
-  useEffect(() => {
-    setText(localStorage.getItem(key) || '');
-  }, [key]);
-  return (
-    <div className="mb-4">
-      <label className="block text-xs font-bold text-gray-400 mb-1 uppercase tracking-wider">
-        Idéer til opgave
-      </label>
-      <textarea
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          localStorage.setItem(key, e.target.value);
-        }}
-        rows={3}
-        placeholder="Skriv frie noter her…"
-        className="w-full bg-battle-grey/30 border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:border-battle-orange focus:outline-none placeholder:text-gray-500 resize-y"
-      />
-    </div>
-  );
+const TRACK_SLUG = 'teamaction';
+
+const SECTION_LABEL: Record<ProjectIdeaSection, string> = {
+  new: 'Nye Tasks',
+  improvement: 'Improvement',
 };
 
 const ProjectIcon = ({
@@ -118,7 +116,7 @@ const ProjectsPage = () => {
 
   const activeIdeas = activeSlug ? ideas.filter((i) => i.projectSlug === activeSlug) : [];
 
-  const openIdeaForm = (idea?: ProjectIdea) => {
+  const openIdeaForm = (idea?: ProjectIdea, section: ProjectIdeaSection = 'improvement') => {
     if (idea) {
       setEditingIdea(idea);
       setDraft({
@@ -126,10 +124,11 @@ const ProjectsPage = () => {
         url: idea.url,
         note: idea.note,
         dueDate: idea.dueDate || '',
+        section: idea.section,
       });
     } else {
       setEditingIdea(null);
-      setDraft(emptyDraft);
+      setDraft({ ...emptyDraft, section });
     }
     setShowIdeaForm(true);
   };
@@ -148,6 +147,7 @@ const ProjectsPage = () => {
       title: draft.title.trim(),
       url: draft.url.trim(),
       note: draft.note.trim(),
+      section: draft.section,
       dueDate: draft.dueDate || null,
     };
     const result = editingIdea
@@ -158,6 +158,22 @@ const ProjectsPage = () => {
       closeIdeaForm();
       await load();
     }
+  };
+
+  // Flytter et kort mellem "Nye Tasks" og "Improvement" uden at åbne formularen.
+  const moveIdeaSection = async (idea: ProjectIdea) => {
+    const nextSection: ProjectIdeaSection =
+      idea.section === 'new' ? 'improvement' : 'new';
+    setIdeas((prev) => prev.map((x) => (x.id === idea.id ? { ...x, section: nextSection } : x)));
+    const result = await updateProjectIdea(idea.id, {
+      projectSlug: idea.projectSlug,
+      title: idea.title,
+      url: idea.url,
+      note: idea.note,
+      section: nextSection,
+      dueDate: idea.dueDate,
+    });
+    if (!result.success) await load();
   };
 
   const handleDeleteIdea = async (i: ProjectIdea) => {
@@ -372,6 +388,103 @@ const ProjectsPage = () => {
   // Project detail view
   const project = activeProject as AnyProject;
   const isCustom = project && '__custom' in project;
+  const isTrack = project?.slug === TRACK_SLUG;
+
+  const renderIdeaCard = (i: ProjectIdea) => (
+    <div
+      key={i.id}
+      className="group bg-battle-grey/30 border border-white/10 rounded-xl p-4 hover:bg-battle-grey/50"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-white font-semibold whitespace-pre-wrap">{i.title}</h3>
+          {i.note && (
+            <p className="text-sm text-gray-400 mt-1 whitespace-pre-wrap">{i.note}</p>
+          )}
+          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+            {i.url && (
+              <a
+                href={i.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-battle-orange hover:underline"
+              >
+                <ExternalLink className="w-3 h-3" />
+                Link
+              </a>
+            )}
+            {i.dueDate && (
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {new Date(i.dueDate).toLocaleDateString('da-DK')}
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          {isTrack && (
+            <button
+              onClick={() => moveIdeaSection(i)}
+              className="p-2 rounded-lg text-gray-400 hover:text-battle-orange hover:bg-white/10"
+              title={
+                i.section === 'new'
+                  ? 'Flyt til Improvement'
+                  : 'Flyt til Nye Tasks'
+              }
+            >
+              <ArrowRightLeft className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            onClick={() => openIdeaForm(i)}
+            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
+            title="Rediger"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleDeleteIdea(i)}
+            className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10"
+            title="Slet"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTrackSection = (section: ProjectIdeaSection) => {
+    const items = activeIdeas.filter((i) => i.section === section);
+    const addLabel = section === 'new' ? 'Ny task' : 'Ny improvement';
+    const emptyLabel =
+      section === 'new'
+        ? 'Ingen nye tasks endnu. Klik "Ny task" for at tilføje en note.'
+        : 'Ingen improvements endnu. Klik "Ny improvement" for at komme i gang.';
+    return (
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+            {SECTION_LABEL[section]} · {items.length}
+          </h3>
+          <button
+            onClick={() => openIdeaForm(undefined, section)}
+            className="px-3 py-1.5 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-xs font-medium flex items-center gap-1.5"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {addLabel}
+          </button>
+        </div>
+        {items.length === 0 ? (
+          <div className="text-center py-8 bg-battle-grey/50 rounded-xl border border-white/10 border-dashed">
+            <p className="text-gray-500 text-xs">{emptyLabel}</p>
+          </div>
+        ) : (
+          <div className="space-y-2">{items.map(renderIdeaCard)}</div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-battle-black">
@@ -399,13 +512,15 @@ const ProjectsPage = () => {
               {activeIdeas.length} {activeIdeas.length === 1 ? 'idé' : 'idéer'}
             </p>
           </div>
-          <button
-            onClick={() => openIdeaForm()}
-            className="px-4 py-2 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-sm font-medium flex items-center gap-1.5"
-          >
-            <Plus className="w-4 h-4" />
-            {project?.slug === 'teamaction' ? 'Ny task idé' : 'Tilføj idé'}
-          </button>
+          {!isTrack && (
+            <button
+              onClick={() => openIdeaForm()}
+              className="px-4 py-2 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-sm font-medium flex items-center gap-1.5"
+            >
+              <Plus className="w-4 h-4" />
+              Tilføj idé
+            </button>
+          )}
           {isCustom && (
             <button
               onClick={() => {
@@ -420,9 +535,12 @@ const ProjectsPage = () => {
           )}
         </div>
 
-        {project?.slug === 'teamaction' && <ProjectScratchpad slug={project.slug} />}
-
-        {activeIdeas.length === 0 ? (
+        {isTrack ? (
+          <>
+            {renderTrackSection('new')}
+            {renderTrackSection('improvement')}
+          </>
+        ) : activeIdeas.length === 0 ? (
           <div className="text-center py-16 bg-battle-grey/50 rounded-xl border border-white/10 border-dashed">
             <Icons.Lightbulb className="w-10 h-10 text-gray-600 mx-auto mb-2" />
             <p className="text-gray-400 text-sm">
@@ -430,58 +548,7 @@ const ProjectsPage = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {activeIdeas.map((i) => (
-              <div
-                key={i.id}
-                className="group bg-battle-grey/30 border border-white/10 rounded-xl p-4 hover:bg-battle-grey/50"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-white font-semibold">{i.title}</h3>
-                    {i.note && (
-                      <p className="text-sm text-gray-400 mt-1 whitespace-pre-wrap">{i.note}</p>
-                    )}
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                      {i.url && (
-                        <a
-                          href={i.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-battle-orange hover:underline"
-                        >
-                          <ExternalLink className="w-3 h-3" />
-                          Link
-                        </a>
-                      )}
-                      {i.dueDate && (
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(i.dueDate).toLocaleDateString('da-DK')}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => openIdeaForm(i)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10"
-                      title="Rediger"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteIdea(i)}
-                      className="p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10"
-                      title="Slet"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <div className="space-y-2">{activeIdeas.map(renderIdeaCard)}</div>
         )}
       </div>
 
@@ -490,13 +557,11 @@ const ProjectsPage = () => {
           <div className="bg-battle-dark border border-white/10 rounded-xl w-full max-w-lg mt-10 shadow-xl">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
               <h3 className="text-lg font-semibold text-white">
-                {editingIdea
-                  ? project?.slug === 'teamaction'
-                    ? 'Rediger task idé'
-                    : 'Rediger idé'
-                  : project?.slug === 'teamaction'
-                    ? 'Ny task idé'
-                    : 'Ny idé'}
+                {(() => {
+                  if (!isTrack) return editingIdea ? 'Rediger idé' : 'Ny idé';
+                  const sec = draft.section === 'new' ? 'task' : 'improvement';
+                  return editingIdea ? `Rediger ${sec}` : `Ny ${sec}`;
+                })()}
               </h3>
               <button
                 onClick={closeIdeaForm}
@@ -507,12 +572,18 @@ const ProjectsPage = () => {
             </div>
 
             <div className="p-5 space-y-4">
-              {project?.slug === 'teamaction' ? (
-                <Field label="Task idé">
+              {isTrack ? (
+                <Field
+                  label={draft.section === 'new' ? 'Ny task' : 'Improvement'}
+                >
                   <textarea
                     autoFocus
                     rows={6}
-                    placeholder="Skriv din task idé…"
+                    placeholder={
+                      draft.section === 'new'
+                        ? 'Skriv din task idé…'
+                        : 'Beskriv forbedringen…'
+                    }
                     value={draft.title}
                     onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                     className="w-full bg-battle-grey border border-white/10 text-white rounded-lg px-3 py-2 text-sm focus:border-battle-orange focus:outline-none resize-y"

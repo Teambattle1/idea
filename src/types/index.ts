@@ -89,12 +89,17 @@ export interface EventContact {
   createdAt: string;
 }
 
+// section is kun relevant for TRACK (teamaction) — splitter idéer i to lister.
+// Default 'improvement' så gamle rows uden felt havner i den eksisterende liste.
+export type ProjectIdeaSection = 'new' | 'improvement';
+
 export interface ProjectIdea {
   id: string;
   projectSlug: string;
   title: string;
   url: string;
   note: string;
+  section: ProjectIdeaSection;
   dueDate: string | null;
   createdAt: string;
 }

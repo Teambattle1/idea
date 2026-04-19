@@ -749,6 +749,7 @@ function projectIdeaToRow(i: Omit<ProjectIdea, 'id' | 'createdAt'>) {
     projectSlug: i.projectSlug,
     url: i.url,
     note: i.note,
+    section: i.section,
   };
   return {
     title: i.title,
@@ -775,6 +776,7 @@ function rowToProjectIdea(row: any): ProjectIdea {
     title: row.title,
     url: data.url || '',
     note: data.note || '',
+    section: data.section === 'new' ? 'new' : 'improvement',
     dueDate: row.due_date || null,
     createdAt: row.created_at,
   };
