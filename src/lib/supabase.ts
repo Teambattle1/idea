@@ -13,18 +13,6 @@ import {
 const supabaseUrl = 'https://ilbjytyukicbssqftmma.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlsYmp5dHl1a2ljYnNzcWZ0bW1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MzA0NjEsImV4cCI6MjA3MDQwNjQ2MX0.I_PWByMPcOYhWgeq9MxXgOo-NCZYfEuzYmo35XnBFAY';
 
-// Singleton guard: Vite HMR re-evaluates this module, which would otherwise
-// create multiple GoTrueClient instances sharing the same storage key.
-const globalForSupabase = globalThis as unknown as {
-  __ideasSupabase?: ReturnType<typeof createClient>;
-};
-export const supabase =
-  globalForSupabase.__ideasSupabase ??
-  (globalForSupabase.__ideasSupabase = createClient(supabaseUrl, supabaseAnonKey));
-
-const IDEA_EMPLOYEE_ID = 'emp_z4ftvagjq';
-const STORAGE_BUCKET = 'idea-materials';
-
 interface TodoRow {
   id: string;
   title: string;
@@ -34,7 +22,33 @@ interface TodoRow {
   resolved: boolean;
   priority: string | null;
   category: string | null;
+  is_error?: boolean | null;
+  due_date?: string | null;
 }
+
+// Loose Database schema: `todos` is used as a generic container for multiple
+// idea-* categories, so per-column typing doesn't help. We keep Row/Insert/Update
+// as `any` to let payloads vary per category; mappers enforce concrete shapes.
+type LooseTable = { Row: any; Insert: any; Update: any; Relationships: []; };
+interface Database {
+  public: {
+    Tables: { todos: LooseTable; [key: string]: LooseTable };
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
+  };
+}
+
+// Singleton guard: Vite HMR re-evaluates this module, which would otherwise
+// create multiple GoTrueClient instances sharing the same storage key.
+const globalForSupabase = globalThis as unknown as {
+  __ideasSupabase?: ReturnType<typeof createClient<Database>>;
+};
+export const supabase =
+  globalForSupabase.__ideasSupabase ??
+  (globalForSupabase.__ideasSupabase = createClient<Database>(supabaseUrl, supabaseAnonKey));
+
+const IDEA_EMPLOYEE_ID = 'emp_z4ftvagjq';
+const STORAGE_BUCKET = 'idea-materials';
 
 // --- File Upload ---
 
@@ -182,7 +196,7 @@ export async function fetchActivities(): Promise<Activity[]> {
       .order('created_at', { ascending: false });
 
     if (error || !data) return [];
-    return (data as TodoRow[]).map(rowToActivity);
+    return (data as unknown as TodoRow[]).map(rowToActivity);
   } catch (err) {
     console.error('fetchActivities error:', err);
     return [];
@@ -198,7 +212,7 @@ export async function fetchActivity(id: string): Promise<Activity | null> {
       .single();
 
     if (error || !data) return null;
-    return rowToActivity(data as TodoRow);
+    return rowToActivity(data as unknown as TodoRow);
   } catch {
     return null;
   }
@@ -310,7 +324,7 @@ export async function fetchCompanies(): Promise<CompanyProfile[]> {
       .order('title', { ascending: true });
 
     if (error || !data) return [];
-    return (data as TodoRow[]).map(rowToCompany);
+    return (data as unknown as TodoRow[]).map(rowToCompany);
   } catch {
     return [];
   }
@@ -444,7 +458,7 @@ export async function fetchAgencies(): Promise<Agency[]> {
       .order('title', { ascending: true });
 
     if (error || !data) return [];
-    return (data as TodoRow[]).map(rowToAgency);
+    return (data as unknown as TodoRow[]).map(rowToAgency);
   } catch {
     return [];
   }
@@ -536,7 +550,7 @@ export async function fetchEventContacts(): Promise<EventContact[]> {
       .eq('category', 'idea-event-contact')
       .order('title', { ascending: true });
     if (error || !data) return [];
-    return (data as TodoRow[]).map(rowToEventContact);
+    return (data as unknown as TodoRow[]).map(rowToEventContact);
   } catch {
     return [];
   }
@@ -860,7 +874,7 @@ export async function fetchCustomProjects(): Promise<CustomProject[]> {
       .eq('category', 'idea-project')
       .order('title', { ascending: true });
     if (error || !data) return [];
-    return (data as TodoRow[]).map(rowToCustomProject);
+    return (data as unknown as TodoRow[]).map(rowToCustomProject);
   } catch {
     return [];
   }

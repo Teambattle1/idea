@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Building2 } from 'lucide-react';
-import { Agency, AGENCY_BADGE_STYLES } from '../types';
+import { Agency } from '../types';
 
 // Country capital coordinates (fallback when city is not set or not in CITY_COORDS).
 const COUNTRY_COORDS: Record<string, [number, number]> = {
@@ -308,7 +308,6 @@ const AgencyMap = ({ agencies, onSelect }: Props) => {
                     {agency.badges.length > 0 && (
                       <div className="flex gap-1 mt-1.5">
                         {agency.badges.map((b) => {
-                          const s = AGENCY_BADGE_STYLES[b];
                           const bg = b === 'PARTNER' ? '#fed7aa' : '#e9d5ff';
                           const color = b === 'PARTNER' ? '#c2410c' : '#6b21a8';
                           return (
