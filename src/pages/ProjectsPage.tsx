@@ -10,6 +10,8 @@ import {
   ExternalLink,
   Calendar,
   ArrowRightLeft,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import Header from '../components/Header';
 import {
@@ -84,6 +86,10 @@ const ProjectsPage = () => {
   const [editingIdea, setEditingIdea] = useState<ProjectIdea | null>(null);
   const [draft, setDraft] = useState<IdeaDraft>(emptyDraft);
   const [savingIdea, setSavingIdea] = useState(false);
+
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverSection, setDragOverSection] = useState<ProjectIdeaSection | null>(null);
+  const [newCollapsed, setNewCollapsed] = useState(true);
 
   const load = async () => {
     setLoading(true);
@@ -160,21 +166,24 @@ const ProjectsPage = () => {
     }
   };
 
-  // Flytter et kort mellem "Nye Tasks" og "Improvement" uden at åbne formularen.
-  const moveIdeaSection = async (idea: ProjectIdea) => {
-    const nextSection: ProjectIdeaSection =
-      idea.section === 'new' ? 'improvement' : 'new';
-    setIdeas((prev) => prev.map((x) => (x.id === idea.id ? { ...x, section: nextSection } : x)));
+  // Sætter et kort til en specifik sektion (bruges af både knap og drag-and-drop).
+  const setIdeaSection = async (idea: ProjectIdea, target: ProjectIdeaSection) => {
+    if (idea.section === target) return;
+    setIdeas((prev) => prev.map((x) => (x.id === idea.id ? { ...x, section: target } : x)));
     const result = await updateProjectIdea(idea.id, {
       projectSlug: idea.projectSlug,
       title: idea.title,
       url: idea.url,
       note: idea.note,
-      section: nextSection,
+      section: target,
       dueDate: idea.dueDate,
     });
     if (!result.success) await load();
   };
+
+  // Flytter et kort mellem "Nye Tasks" og "Improvement" uden at åbne formularen.
+  const moveIdeaSection = (idea: ProjectIdea) =>
+    setIdeaSection(idea, idea.section === 'new' ? 'improvement' : 'new');
 
   const handleDeleteIdea = async (i: ProjectIdea) => {
     if (!confirm(`Slet idé "${i.title}"?`)) return;
@@ -393,33 +402,61 @@ const ProjectsPage = () => {
   const renderIdeaCard = (i: ProjectIdea) => (
     <div
       key={i.id}
-      className="group bg-battle-grey/30 border border-white/10 rounded-xl p-4 hover:bg-battle-grey/50"
+      draggable={isTrack}
+      onDragStart={(e) => {
+        if (!isTrack) return;
+        e.dataTransfer.setData('text/plain', i.id);
+        e.dataTransfer.effectAllowed = 'move';
+        setDraggingId(i.id);
+      }}
+      onDragEnd={() => {
+        setDraggingId(null);
+        setDragOverSection(null);
+      }}
+      className={`group bg-battle-grey/30 border border-white/10 rounded-xl p-4 hover:bg-battle-grey/50 transition-opacity ${
+        isTrack ? 'cursor-grab active:cursor-grabbing select-none' : ''
+      } ${draggingId === i.id ? 'opacity-40' : ''}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className="text-white font-semibold whitespace-pre-wrap">{i.title}</h3>
-          {i.note && (
-            <p className="text-sm text-gray-400 mt-1 whitespace-pre-wrap">{i.note}</p>
+          {isTrack ? (
+            <div className="flex items-baseline gap-3 flex-wrap">
+              <h3 className="text-white font-semibold whitespace-pre-wrap">{i.title}</h3>
+              {i.note && (
+                <p className="text-sm text-gray-400 whitespace-pre-wrap flex-1 min-w-0">
+                  {i.note}
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <h3 className="text-white font-semibold whitespace-pre-wrap">{i.title}</h3>
+              {i.note && (
+                <p className="text-sm text-gray-400 mt-1 whitespace-pre-wrap">{i.note}</p>
+              )}
+            </>
           )}
-          <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-            {i.url && (
-              <a
-                href={i.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-battle-orange hover:underline"
-              >
-                <ExternalLink className="w-3 h-3" />
-                Link
-              </a>
-            )}
-            {i.dueDate && (
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
-                {new Date(i.dueDate).toLocaleDateString('da-DK')}
-              </span>
-            )}
-          </div>
+          {(i.url || i.dueDate) && (
+            <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+              {i.url && (
+                <a
+                  href={i.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-battle-orange hover:underline"
+                >
+                  <ExternalLink className="w-3 h-3" />
+                  Link
+                </a>
+              )}
+              {i.dueDate && (
+                <span className="inline-flex items-center gap-1">
+                  <Calendar className="w-3 h-3" />
+                  {new Date(i.dueDate).toLocaleDateString('da-DK')}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {isTrack && (
@@ -461,12 +498,63 @@ const ProjectsPage = () => {
       section === 'new'
         ? 'Ingen nye tasks endnu. Klik "Ny task" for at tilføje en note.'
         : 'Ingen improvements endnu. Klik "Ny improvement" for at komme i gang.';
+    const isDragOver = dragOverSection === section;
+    const draggedIdea = draggingId ? ideas.find((x) => x.id === draggingId) : null;
+    const willAcceptDrop = !!draggedIdea && draggedIdea.section !== section;
+    const collapsible = section === 'new';
+    const collapsed = collapsible && newCollapsed;
+
+    const handleDragOver = (e: React.DragEvent) => {
+      if (!draggingId) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragOverSection !== section) setDragOverSection(section);
+    };
+    const handleDragLeave = (e: React.DragEvent) => {
+      if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+        setDragOverSection(null);
+      }
+    };
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      const id = e.dataTransfer.getData('text/plain');
+      const idea = ideas.find((x) => x.id === id);
+      if (idea) {
+        setIdeaSection(idea, section);
+        if (collapsible) setNewCollapsed(false);
+      }
+      setDragOverSection(null);
+      setDraggingId(null);
+    };
+
     return (
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+        <div
+          onDragOver={collapsed ? handleDragOver : undefined}
+          onDragLeave={collapsed ? handleDragLeave : undefined}
+          onDrop={collapsed ? handleDrop : undefined}
+          className={`flex items-center justify-between mb-3 rounded-lg transition-colors ${
+            collapsed && isDragOver && willAcceptDrop
+              ? 'ring-2 ring-battle-orange bg-battle-orange/5 px-2 py-1 -mx-2'
+              : ''
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => collapsible && setNewCollapsed((c) => !c)}
+            disabled={!collapsible}
+            className={`flex items-center gap-1.5 text-sm font-bold text-gray-400 uppercase tracking-wider ${
+              collapsible ? 'hover:text-white' : 'cursor-default'
+            }`}
+          >
+            {collapsible &&
+              (collapsed ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
+              ))}
             {SECTION_LABEL[section]} · {items.length}
-          </h3>
+          </button>
           <button
             onClick={() => openIdeaForm(undefined, section)}
             className="px-3 py-1.5 bg-battle-orange hover:bg-battle-orangeLight text-white rounded-lg text-xs font-medium flex items-center gap-1.5"
@@ -475,12 +563,25 @@ const ProjectsPage = () => {
             {addLabel}
           </button>
         </div>
-        {items.length === 0 ? (
-          <div className="text-center py-8 bg-battle-grey/50 rounded-xl border border-white/10 border-dashed">
-            <p className="text-gray-500 text-xs">{emptyLabel}</p>
+        {!collapsed && (
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`rounded-xl transition-colors ${
+              isDragOver && willAcceptDrop
+                ? 'ring-2 ring-battle-orange bg-battle-orange/5 p-2 -m-2'
+                : ''
+            }`}
+          >
+            {items.length === 0 ? (
+              <div className="text-center py-8 bg-battle-grey/50 rounded-xl border border-white/10 border-dashed">
+                <p className="text-gray-500 text-xs">{emptyLabel}</p>
+              </div>
+            ) : (
+              <div className="space-y-2">{items.map(renderIdeaCard)}</div>
+            )}
           </div>
-        ) : (
-          <div className="space-y-2">{items.map(renderIdeaCard)}</div>
         )}
       </div>
     );
@@ -490,7 +591,7 @@ const ProjectsPage = () => {
     <div className="min-h-screen bg-battle-black">
       <Header />
 
-      <div className="max-w-3xl mx-auto px-4 py-6">
+      <div className={`${isTrack ? 'max-w-6xl' : 'max-w-3xl'} mx-auto px-4 py-6`}>
         <button
           onClick={() => setActiveSlug(null)}
           className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white mb-4"
@@ -537,8 +638,8 @@ const ProjectsPage = () => {
 
         {isTrack ? (
           <>
-            {renderTrackSection('new')}
             {renderTrackSection('improvement')}
+            {renderTrackSection('new')}
           </>
         ) : activeIdeas.length === 0 ? (
           <div className="text-center py-16 bg-battle-grey/50 rounded-xl border border-white/10 border-dashed">
